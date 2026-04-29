@@ -1,5 +1,6 @@
 package com.finance.tracker.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,7 +20,11 @@ public class Transaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "transaction_id")
     private Long id;
+
+    @Column(name = "user_id")
+    private Long userId;
 
     @NotBlank(message = "Title is required")
     @Column(nullable = false)
@@ -38,7 +43,7 @@ public class Transaction {
     private String category;
 
     @NotNull(message = "Date is required")
-    @Column(nullable = false)
+    @Column(name = "transaction_date", nullable = false)
     private LocalDate date;
 
     @Column(length = 500)

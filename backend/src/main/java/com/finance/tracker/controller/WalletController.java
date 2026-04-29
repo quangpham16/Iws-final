@@ -21,8 +21,8 @@ public class WalletController {
 
     // GET /api/wallets
     @GetMapping
-    public ResponseEntity<List<Wallet>> getAll() {
-        return ResponseEntity.ok(walletService.findAll());
+    public ResponseEntity<List<Wallet>> getAll(@RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(walletService.findAll(userId));
     }
 
     // GET /api/wallets/{id}
@@ -45,7 +45,10 @@ public class WalletController {
 
     // POST /api/wallets
     @PostMapping
-    public ResponseEntity<Wallet> create(@Valid @RequestBody Wallet wallet) {
+    public ResponseEntity<Wallet> create(
+            @RequestHeader("X-User-Id") Long userId,
+            @Valid @RequestBody Wallet wallet) {
+        wallet.setUserId(userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(walletService.create(wallet));
     }
 

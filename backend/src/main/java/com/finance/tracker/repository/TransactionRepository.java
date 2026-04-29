@@ -12,6 +12,9 @@ import java.util.List;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
+    // Filter by user
+    List<Transaction> findByUserId(Long userId);
+
     // Filter by type (INCOME / EXPENSE)
     List<Transaction> findByType(TransactionType type);
 
@@ -24,11 +27,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     // Search by title (case-insensitive)
     List<Transaction> findByTitleContainingIgnoreCase(String keyword);
 
-    // Sum of all income
-    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.type = 'INCOME'")
-    java.math.BigDecimal sumIncome();
+    // Sum of all income for user
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.type = 'INCOME' AND t.userId = :userId")
+    java.math.BigDecimal sumIncome(Long userId);
 
-    // Sum of all expenses
-    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.type = 'EXPENSE'")
-    java.math.BigDecimal sumExpense();
+    // Sum of all expenses for user
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.type = 'EXPENSE' AND t.userId = :userId")
+    java.math.BigDecimal sumExpense(Long userId);
 }

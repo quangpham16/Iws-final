@@ -22,8 +22,8 @@ public class TransactionService {
     // ── Read ──────────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public List<Transaction> findAll() {
-        return transactionRepository.findAll();
+    public List<Transaction> findAll(Long userId) {
+        return transactionRepository.findByUserId(userId);
     }
 
     @Transactional(readOnly = true)
@@ -55,9 +55,9 @@ public class TransactionService {
     // ── Summary ───────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public Map<String, BigDecimal> getSummary() {
-        BigDecimal income  = transactionRepository.sumIncome();
-        BigDecimal expense = transactionRepository.sumExpense();
+    public Map<String, BigDecimal> getSummary(Long userId) {
+        BigDecimal income  = transactionRepository.sumIncome(userId);
+        BigDecimal expense = transactionRepository.sumExpense(userId);
         BigDecimal balance = income.subtract(expense);
         return Map.of(
                 "totalIncome",  income,

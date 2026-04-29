@@ -24,8 +24,8 @@ public class TransactionController {
 
     // GET /api/transactions
     @GetMapping
-    public ResponseEntity<List<Transaction>> getAll() {
-        return ResponseEntity.ok(transactionService.findAll());
+    public ResponseEntity<List<Transaction>> getAll(@RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(transactionService.findAll(userId));
     }
 
     // GET /api/transactions/{id}
@@ -62,13 +62,16 @@ public class TransactionController {
 
     // GET /api/transactions/summary
     @GetMapping("/summary")
-    public ResponseEntity<Map<String, BigDecimal>> getSummary() {
-        return ResponseEntity.ok(transactionService.getSummary());
+    public ResponseEntity<Map<String, BigDecimal>> getSummary(@RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(transactionService.getSummary(userId));
     }
 
     // POST /api/transactions
     @PostMapping
-    public ResponseEntity<Transaction> create(@Valid @RequestBody Transaction transaction) {
+    public ResponseEntity<Transaction> create(
+            @RequestHeader("X-User-Id") Long userId,
+            @Valid @RequestBody Transaction transaction) {
+        transaction.setUserId(userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(transactionService.create(transaction));
     }
 

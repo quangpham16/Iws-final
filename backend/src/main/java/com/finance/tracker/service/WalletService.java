@@ -19,8 +19,8 @@ public class WalletService {
     // -- Read ------------------------------------------------------------------
 
     @Transactional(readOnly = true)
-    public List<Wallet> findAll() {
-        return walletRepository.findAll();
+    public List<Wallet> findAll(Long userId) {
+        return walletRepository.findByUserId(userId);
     }
 
     @Transactional(readOnly = true)
