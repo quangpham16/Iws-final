@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "wallets")
@@ -29,8 +29,14 @@ public class Wallet {
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal balance;
 
+    @Column(length = 10)
+    @Builder.Default
+    private String currency = "USD";
+
     @Column(length = 500)
     private String note;
 
-    @
+    @Column(nullable = false, updatable = false)
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 }
