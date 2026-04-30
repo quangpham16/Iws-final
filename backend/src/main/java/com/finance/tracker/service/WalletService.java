@@ -1,5 +1,7 @@
 package com.finance.tracker.service;
 
+import com.finance.tracker.dto.WalletDTO;
+import com.finance.tracker.mapper.WalletMapper;
 import com.finance.tracker.model.Wallet;
 import com.finance.tracker.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -15,47 +19,58 @@ import java.util.List;
 public class WalletService {
 
     private final WalletRepository walletRepository;
+    private final WalletMapper walletMapper;
 
     // -- Read ------------------------------------------------------------------
 
     @Transactional(readOnly = true)
-    public List<Wallet> findAll(Long userId) {
-        return walletRepository.findByUserId(userId);
+    public List<WalletDTO> findAll(Long userId) {
+        return walletRepository.findByUserId(userId).stream()
+                .map(walletMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public Wallet findById(Long id) {
+    public WalletDTO findById(Long id) {
         return walletRepository.findById(id)
+                .map(walletMapper::toDTO)
                 .orElseThrow(() -> new RuntimeException("Wallet not found with id: " + id));
     }
 
     @Transactional(readOnly = true)
-    public List<Wallet> search(String keyword) {
-        return walletRepository.findByNameContainingIgnoreCase(keyword);
+    public List<WalletDTO> search(String keyword) {
+        return walletRepository.findByNameContainingIgnoreCase(keyword).stream()
+                .map(walletMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public BigDecimal getTotalBalance() {
-        return walletRepository.sumTotalBalance();
+        return Objects.requireNonNullElse(walletRepository.sumTotalBalance(), BigDecimal.ZERO);
     }
 
     // -- Write -----------------------------------------------------------------
 
-    public Wallet create(Wallet wallet) {
-        return walletRepository.save(wallet);
+    public WalletDTO create(Long userId, WalletDTO dto) {
+        Wallet entity = walletMapper.toEntity(dto);
+        entity.setUserId(userId);
+        return walletMapper.toDTO(walletRepository.save(entity));
     }
 
-    public Wallet update(Long id, Wallet updated) {
-        Wallet existing = findById(id);
-        existing.setName(updated.getName());
-        existing.setBalance(updated.getBalance());
-        existing.setCurrency(updated.getCurrency());
-        existing.setNote(updated.getNote());
-        return walletRepository.save(existing);
+    public WalletDTO update(Long id, WalletDTO updatedDto) {
+        Wallet existing = walletRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Wallet not found with id: " + id));
+        existing.setName(updatedDto.getName());
+        existing.setBalance(updatedDto.getBalance());
+        existing.setCurrency(updatedDto.getCurrency());
+        existing.setNote(updatedDto.getNote());
+        return walletMapper.toDTO(walletRepository.save(existing));
     }
 
     public void delete(Long id) {
-        Wallet existing = findById(id);
-        walletRepository.delete(existing);
+        if (!walletRepository.existsById(id)) {
+            throw new RuntimeException("Wallet not found with id: " + id);
+        }
+        walletRepository.deleteById(id);
     }
 }
