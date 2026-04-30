@@ -20,6 +20,7 @@ public class Budget {
     @Column(nullable = false)
     private String name;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "period_type")
     private PeriodType periodType = PeriodType.monthly;
@@ -30,6 +31,10 @@ public class Budget {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
+    @Column(name = "amount", nullable = false)
+    private java.math.BigDecimal amount;
+
+    @Builder.Default
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

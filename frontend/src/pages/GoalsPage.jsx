@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Trophy, ArrowUpRight, Clock } from 'lucide-react';
+import { Plus, Trash2, Trophy, Clock, Target, TrendingUp, X } from 'lucide-react';
 import { goalApi } from '../services/api';
 
 export default function GoalsPage() {
@@ -11,7 +11,7 @@ export default function GoalsPage() {
         targetAmount: '', 
         currentAmount: 0, 
         targetDate: '',
-        colorHex: '#10b981'
+        colorHex: '#106E4E'
     });
 
     useEffect(() => {
@@ -40,68 +40,134 @@ export default function GoalsPage() {
         }
     };
 
+    const handleDelete = async (id) => {
+        if (window.confirm('Abandon this goal?')) {
+            try {
+                await goalApi.delete(id);
+                fetchGoals();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    };
+
+    const totalTarget = goals.reduce((sum, g) => sum + (parseFloat(g.targetAmount) || 0), 0);
+    const totalSaved = goals.reduce((sum, g) => sum + (parseFloat(g.currentAmount) || 0), 0);
+    const globalProgress = totalTarget > 0 ? (totalSaved / totalTarget) * 100 : 0;
+
+    if (loading) return (
+        <div className="flex items-center justify-center h-full">
+            <div className="w-10 h-10 border-4 border-[#106E4E] border-t-transparent rounded-full animate-spin" />
+        </div>
+    );
+
     return (
-        <div className="space-y-8 animate-in fade-in duration-700">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">Financial Goals</h1>
-                    <p className="text-slate-500 font-medium">Turn your dreams into achievable targets</p>
+        <div className="space-y-12 max-w-[1600px] mx-auto w-full animate-in fade-in duration-700">
+            {/* Header Section */}
+            <div className="flex items-end justify-between">
+                <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em]">Wealth Building</p>
+                    <h1 className="text-5xl font-black text-gray-900 tracking-tighter">
+                        Your <span className="text-[#106E4E]">Aspirations.</span>
+                    </h1>
                 </div>
-                <button 
-                    onClick={() => setShowAdd(true)}
-                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-200 active:scale-95"
-                >
-                    <Plus size={20} />
-                    Define New Goal
-                </button>
+                <div className="flex gap-4">
+                    <div className="flex flex-col items-end pr-4 border-r border-gray-200">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Global Progress</p>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-2xl font-black text-gray-900 tabular-nums">{globalProgress.toFixed(1)}%</h2>
+                            <TrendingUp size={16} className="text-[#106E4E]" />
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => setShowAdd(true)}
+                        className="bg-gray-900 text-white px-6 py-4 rounded-2xl font-black text-sm hover:bg-[#106E4E] transition-all flex items-center gap-2 shadow-xl shadow-gray-900/10"
+                    >
+                        <Plus size={18} /> Define Aspiration
+                    </button>
+                </div>
             </div>
 
-            {loading ? (
-                <div className="flex items-center justify-center h-64">
-                    <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+            {goals.length === 0 ? (
+                <div className="bg-white p-20 rounded-[3rem] border border-dashed border-gray-200 flex flex-col items-center text-center">
+                    <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-6">
+                        <Trophy size={48} strokeWidth={1.5} />
+                    </div>
+                    <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">No goals defined</h3>
+                    <p className="text-gray-400 font-medium max-w-md">Set your first financial goal to start building wealth intentionally.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {goals.map((goal) => {
-                        const progress = Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100) || 0);
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {goals.map((goal, index) => {
+                        const target = parseFloat(goal.targetAmount) || 0;
+                        const current = parseFloat(goal.currentAmount) || 0;
+                        const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
+                        const isCompleted = progress >= 100;
+                        
                         return (
-                            <div key={goal.id} className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl transition-all relative overflow-hidden group">
-                                <div className="absolute top-0 left-0 w-full h-2" style={{ backgroundColor: goal.colorHex }} />
+                            <div key={goal.id} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all relative overflow-hidden group">
+                                <div 
+                                    className="absolute top-0 left-0 w-full h-2 transition-all duration-1000 opacity-80" 
+                                    style={{ backgroundColor: goal.colorHex || '#106E4E' }} 
+                                />
                                 
-                                <div className="flex items-center justify-between mb-8">
-                                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white" style={{ backgroundColor: goal.colorHex }}>
-                                        <Trophy size={28} />
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="text-2xl font-black text-slate-800">{progress}%</span>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Achieved</p>
-                                    </div>
-                                </div>
+                                <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full blur-3xl opacity-10 transition-transform duration-1000 group-hover:scale-150 pointer-events-none"
+                                     style={{ backgroundColor: goal.colorHex || '#106E4E' }} />
 
-                                <h3 className="text-xl font-black text-slate-800 mb-6">{goal.name}</h3>
-
-                                <div className="space-y-6">
-                                    <div className="w-full h-3 bg-slate-50 rounded-full overflow-hidden">
+                                <div className="relative z-10 flex flex-col h-full">
+                                    <div className="flex items-start justify-between mb-8">
                                         <div 
-                                            className="h-full rounded-full transition-all duration-1000"
-                                            style={{ backgroundColor: goal.colorHex, width: `${progress}%` }}
-                                        />
+                                            className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg" 
+                                            style={{ backgroundColor: goal.colorHex || '#106E4E' }}
+                                        >
+                                            <Trophy size={24} />
+                                        </div>
+                                        <div className="flex flex-col items-end gap-2">
+                                            <div className="text-right">
+                                                <span className="text-3xl font-black text-gray-900 tabular-nums">{progress.toFixed(0)}%</span>
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Achieved</p>
+                                            </div>
+                                            <button 
+                                                onClick={() => handleDelete(goal.id)}
+                                                className="p-2 text-gray-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    <div className="flex justify-between">
-                                        <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Current</p>
-                                            <p className="font-bold text-slate-700">${goal.currentAmount.toLocaleString()}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Target</p>
-                                            <p className="font-bold text-slate-800">${goal.targetAmount.toLocaleString()}</p>
-                                        </div>
+                                    <div className="mb-8">
+                                        <h3 className="text-2xl font-black text-gray-900 tracking-tight leading-tight mb-2">{goal.name}</h3>
+                                        {isCompleted && (
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+                                                Goal Reached
+                                            </span>
+                                        )}
                                     </div>
 
-                                    <div className="pt-4 border-t border-slate-50 flex items-center gap-2 text-slate-400">
-                                        <Clock size={14} />
-                                        <span className="text-xs font-bold">Target Date: {goal.targetDate || 'Flexible'}</span>
+                                    <div className="mt-auto space-y-6">
+                                        <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                                            <div 
+                                                className="h-full rounded-full transition-all duration-1000"
+                                                style={{ backgroundColor: goal.colorHex || '#106E4E', width: `${progress}%` }}
+                                            />
+                                        </div>
+
+                                        <div className="flex justify-between items-end">
+                                            <div>
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Saved</p>
+                                                <p className="text-xl font-black text-gray-900 tabular-nums">${current.toLocaleString()}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Target</p>
+                                                <p className="text-xl font-bold text-gray-400 tabular-nums">${target.toLocaleString()}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-4 border-t border-gray-50 flex items-center gap-2 text-gray-400">
+                                            <Clock size={14} />
+                                            <span className="text-xs font-bold">Target: {goal.targetDate ? new Date(goal.targetDate).toLocaleDateString() : 'Flexible'}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -111,47 +177,68 @@ export default function GoalsPage() {
             )}
 
             {showAdd && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl animate-in zoom-in-95 duration-300">
-                        <h2 className="text-2xl font-black text-slate-800 mb-8">Define Goal</h2>
-                        <form onSubmit={handleAdd} className="space-y-6">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
+                        <div className="p-8 border-b border-gray-50 flex items-center justify-between">
+                            <h3 className="text-2xl font-black text-gray-900 tracking-tight">Define Aspiration</h3>
+                            <button onClick={() => setShowAdd(false)} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-2xl transition-all">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleAdd} className="p-8 space-y-6">
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Goal Name</label>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Goal Name</label>
                                 <input 
                                     type="text" 
                                     required
                                     value={newGoal.name}
                                     onChange={e => setNewGoal({...newGoal, name: e.target.value})}
-                                    className="w-full bg-slate-50 border-none px-6 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold text-slate-700"
-                                    placeholder="Buy a Car, House Downpayment, etc."
+                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all placeholder:text-gray-300"
+                                    placeholder="e.g. Home Downpayment"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Target Amount</label>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target Amount ($)</label>
                                     <input 
                                         type="number" 
                                         required
                                         value={newGoal.targetAmount}
                                         onChange={e => setNewGoal({...newGoal, targetAmount: e.target.value})}
-                                        className="w-full bg-slate-50 border-none px-6 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold text-slate-700"
-                                        placeholder="0.00"
+                                        className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 tabular-nums focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all placeholder:text-gray-300"
+                                        placeholder="10000.00"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Target Date</label>
-                                    <input 
-                                        type="date" 
-                                        value={newGoal.targetDate}
-                                        onChange={e => setNewGoal({...newGoal, targetDate: e.target.value})}
-                                        className="w-full bg-slate-50 border-none px-4 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold text-slate-700"
-                                    />
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Theme Color</label>
+                                    <div className="flex items-center gap-2">
+                                        <input 
+                                            type="color" 
+                                            value={newGoal.colorHex}
+                                            onChange={e => setNewGoal({...newGoal, colorHex: e.target.value})}
+                                            className="w-12 h-14 p-1 bg-gray-50 border border-gray-100 rounded-2xl cursor-pointer"
+                                        />
+                                        <input 
+                                            type="text" 
+                                            value={newGoal.colorHex}
+                                            onChange={e => setNewGoal({...newGoal, colorHex: e.target.value})}
+                                            className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 uppercase focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all"
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex gap-4 pt-4">
-                                <button type="button" onClick={() => setShowAdd(false)} className="flex-1 py-4 text-slate-500 font-bold hover:bg-slate-50 rounded-2xl transition-all">Cancel</button>
-                                <button type="submit" className="flex-1 py-4 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all">Start Goal</button>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target Date (Optional)</label>
+                                <input 
+                                    type="date" 
+                                    value={newGoal.targetDate}
+                                    onChange={e => setNewGoal({...newGoal, targetDate: e.target.value})}
+                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all"
+                                />
                             </div>
+                            <button type="submit" className="w-full py-5 bg-gray-900 text-white font-black rounded-2xl hover:bg-[#106E4E] shadow-xl shadow-gray-900/10 transition-all mt-4">
+                                Initialize Goal
+                            </button>
                         </form>
                     </div>
                 </div>

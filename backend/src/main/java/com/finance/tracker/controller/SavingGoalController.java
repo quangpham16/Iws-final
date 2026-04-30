@@ -1,10 +1,11 @@
 package com.finance.tracker.controller;
 
-import com.finance.tracker.model.SavingGoal;
-import com.finance.tracker.repository.SavingGoalRepository;
+import com.finance.tracker.dto.SavingGoalDTO;
+import com.finance.tracker.service.SavingGoalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -12,24 +13,21 @@ import java.util.List;
 @RequestMapping("/api/goals")
 @RequiredArgsConstructor
 public class SavingGoalController {
-    private final SavingGoalRepository savingGoalRepository;
+    private final SavingGoalService savingGoalService;
 
     @GetMapping
-    public List<SavingGoal> getAll(@RequestHeader("X-User-Id") Long userId) {
-        return savingGoalRepository.findByUserId(userId);
+    public List<SavingGoalDTO> getAll(@RequestHeader("X-User-Id") Long userId) {
+        return savingGoalService.getAllGoals(userId);
     }
 
     @PostMapping
-    public ResponseEntity<SavingGoal> create(@RequestHeader("X-User-Id") Long userId, @RequestBody SavingGoal goal) {
-        goal.setUserId(userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savingGoalRepository.save(goal));
+    public ResponseEntity<SavingGoalDTO> create(@RequestHeader("X-User-Id") Long userId, @RequestBody SavingGoalDTO goalDTO) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(savingGoalService.createGoal(userId, goalDTO));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@RequestHeader("X-User-Id") Long userId, @PathVariable Long id) {
-        savingGoalRepository.findById(id).ifPresent(g -> {
-            if (g.getUserId().equals(userId)) savingGoalRepository.delete(g);
-        });
+    public ResponseEntity<Void> delete(@RequestHeader("X-User-Id") @NonNull Long userId, @PathVariable @NonNull Long id) {
+        savingGoalService.deleteGoal(userId, id);
         return ResponseEntity.noContent().build();
     }
 }
