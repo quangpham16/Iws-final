@@ -1,10 +1,11 @@
 package com.finance.tracker.controller;
 
-import com.finance.tracker.model.Budget;
-import com.finance.tracker.repository.BudgetRepository;
+import com.finance.tracker.dto.BudgetDTO;
+import com.finance.tracker.service.BudgetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -12,24 +13,21 @@ import java.util.List;
 @RequestMapping("/api/budgets")
 @RequiredArgsConstructor
 public class BudgetController {
-    private final BudgetRepository budgetRepository;
+    private final BudgetService budgetService;
 
     @GetMapping
-    public List<Budget> getAll(@RequestHeader("X-User-Id") Long userId) {
-        return budgetRepository.findByUserId(userId);
+    public List<BudgetDTO> getAll(@RequestHeader("X-User-Id") Long userId) {
+        return budgetService.getAllBudgets(userId);
     }
 
     @PostMapping
-    public ResponseEntity<Budget> create(@RequestHeader("X-User-Id") Long userId, @RequestBody Budget budget) {
-        budget.setUserId(userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(budgetRepository.save(budget));
+    public ResponseEntity<BudgetDTO> create(@RequestHeader("X-User-Id") Long userId, @RequestBody BudgetDTO budgetDTO) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(budgetService.createBudget(userId, budgetDTO));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@RequestHeader("X-User-Id") Long userId, @PathVariable Long id) {
-        budgetRepository.findById(id).ifPresent(b -> {
-            if (b.getUserId().equals(userId)) budgetRepository.delete(b);
-        });
+    public ResponseEntity<Void> delete(@RequestHeader("X-User-Id") @NonNull Long userId, @PathVariable @NonNull Long id) {
+        budgetService.deleteBudget(userId, id);
         return ResponseEntity.noContent().build();
     }
 }

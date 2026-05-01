@@ -21,4 +21,8 @@ public interface WalletRepository extends JpaRepository<Wallet, Long> {
     // Sum of all wallet balances
     @Query("SELECT COALESCE(SUM(w.balance), 0) FROM Wallet w")
     BigDecimal sumTotalBalance();
+
+    // Sum of wallet balances for a specific user
+    @Query("SELECT COALESCE(SUM(w.balance), 0) FROM Wallet w WHERE w.userId = :userId")
+    BigDecimal sumTotalBalanceByUserId(@org.springframework.data.repository.query.Param("userId") Long userId);
 }

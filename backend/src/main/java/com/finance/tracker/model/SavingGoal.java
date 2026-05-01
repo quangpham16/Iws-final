@@ -26,9 +26,11 @@ public class SavingGoal {
     @Column(name = "target_amount", nullable = false)
     private BigDecimal targetAmount;
 
+    @Builder.Default
     @Column(name = "current_amount")
     private BigDecimal currentAmount = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(name = "currency_code")
     private String currencyCode = "VND";
 
@@ -41,9 +43,11 @@ public class SavingGoal {
     private String colorHex;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private GoalStatus status = GoalStatus.active;
 
     @Column(name = "created_at", updatable = false)
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public enum GoalStatus {

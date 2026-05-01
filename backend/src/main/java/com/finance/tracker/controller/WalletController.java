@@ -1,6 +1,6 @@
 package com.finance.tracker.controller;
 
-import com.finance.tracker.model.Wallet;
+import com.finance.tracker.dto.WalletDTO;
 import com.finance.tracker.service.WalletService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,43 +21,42 @@ public class WalletController {
 
     // GET /api/wallets
     @GetMapping
-    public ResponseEntity<List<Wallet>> getAll(@RequestHeader("X-User-Id") Long userId) {
+    public ResponseEntity<List<WalletDTO>> getAll(@RequestHeader("X-User-Id") Long userId) {
         return ResponseEntity.ok(walletService.findAll(userId));
     }
 
     // GET /api/wallets/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<Wallet> getById(@PathVariable Long id) {
+    public ResponseEntity<WalletDTO> getById(@PathVariable Long id) {
         return ResponseEntity.ok(walletService.findById(id));
     }
 
     // GET /api/wallets/search?keyword=savings
     @GetMapping("/search")
-    public ResponseEntity<List<Wallet>> search(@RequestParam String keyword) {
+    public ResponseEntity<List<WalletDTO>> search(@RequestParam String keyword) {
         return ResponseEntity.ok(walletService.search(keyword));
     }
 
     // GET /api/wallets/total-balance
     @GetMapping("/total-balance")
-    public ResponseEntity<Map<String, BigDecimal>> getTotalBalance() {
-        return ResponseEntity.ok(Map.of("totalBalance", walletService.getTotalBalance()));
+    public ResponseEntity<Map<String, BigDecimal>> getTotalBalance(@RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(Map.of("totalBalance", walletService.getTotalBalance(userId)));
     }
 
     // POST /api/wallets
     @PostMapping
-    public ResponseEntity<Wallet> create(
+    public ResponseEntity<WalletDTO> create(
             @RequestHeader("X-User-Id") Long userId,
-            @Valid @RequestBody Wallet wallet) {
-        wallet.setUserId(userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(walletService.create(wallet));
+            @Valid @RequestBody WalletDTO walletDto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(walletService.create(userId, walletDto));
     }
 
     // PUT /api/wallets/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<Wallet> update(
+    public ResponseEntity<WalletDTO> update(
             @PathVariable Long id,
-            @Valid @RequestBody Wallet wallet) {
-        return ResponseEntity.ok(walletService.update(id, wallet));
+            @Valid @RequestBody WalletDTO walletDto) {
+        return ResponseEntity.ok(walletService.update(id, walletDto));
     }
 
     // DELETE /api/wallets/{id}

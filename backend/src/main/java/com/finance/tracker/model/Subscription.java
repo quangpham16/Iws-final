@@ -24,6 +24,7 @@ public class Subscription {
     @Column(name = "estimated_amount", nullable = false)
     private BigDecimal estimatedAmount;
 
+    @Builder.Default
     @Column(name = "currency_code")
     private String currencyCode = "VND";
 
@@ -34,9 +35,11 @@ public class Subscription {
     @Column(name = "next_due_date")
     private LocalDate nextDueDate;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     private SubscriptionStatus status = SubscriptionStatus.active;
 
+    @Builder.Default
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

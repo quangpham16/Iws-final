@@ -1,6 +1,6 @@
 package com.finance.tracker.controller;
 
-import com.finance.tracker.model.Transaction;
+import com.finance.tracker.dto.TransactionDTO;
 import com.finance.tracker.model.Transaction.TransactionType;
 import com.finance.tracker.service.TransactionService;
 import jakarta.validation.Valid;
@@ -24,31 +24,31 @@ public class TransactionController {
 
     // GET /api/transactions
     @GetMapping
-    public ResponseEntity<List<Transaction>> getAll(@RequestHeader("X-User-Id") Long userId) {
+    public ResponseEntity<List<TransactionDTO>> getAll(@RequestHeader("X-User-Id") Long userId) {
         return ResponseEntity.ok(transactionService.findAll(userId));
     }
 
     // GET /api/transactions/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<Transaction> getById(@PathVariable Long id) {
+    public ResponseEntity<TransactionDTO> getById(@PathVariable Long id) {
         return ResponseEntity.ok(transactionService.findById(id));
     }
 
     // GET /api/transactions/type/{type}   e.g. INCOME | EXPENSE
     @GetMapping("/type/{type}")
-    public ResponseEntity<List<Transaction>> getByType(@PathVariable TransactionType type) {
+    public ResponseEntity<List<TransactionDTO>> getByType(@PathVariable TransactionType type) {
         return ResponseEntity.ok(transactionService.findByType(type));
     }
 
     // GET /api/transactions/category/{category}
     @GetMapping("/category/{category}")
-    public ResponseEntity<List<Transaction>> getByCategory(@PathVariable String category) {
+    public ResponseEntity<List<TransactionDTO>> getByCategory(@PathVariable String category) {
         return ResponseEntity.ok(transactionService.findByCategory(category));
     }
 
     // GET /api/transactions/range?from=2024-01-01&to=2024-12-31
     @GetMapping("/range")
-    public ResponseEntity<List<Transaction>> getByDateRange(
+    public ResponseEntity<List<TransactionDTO>> getByDateRange(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return ResponseEntity.ok(transactionService.findByDateRange(from, to));
@@ -56,7 +56,7 @@ public class TransactionController {
 
     // GET /api/transactions/search?keyword=groceries
     @GetMapping("/search")
-    public ResponseEntity<List<Transaction>> search(@RequestParam String keyword) {
+    public ResponseEntity<List<TransactionDTO>> search(@RequestParam String keyword) {
         return ResponseEntity.ok(transactionService.search(keyword));
     }
 
@@ -68,19 +68,18 @@ public class TransactionController {
 
     // POST /api/transactions
     @PostMapping
-    public ResponseEntity<Transaction> create(
+    public ResponseEntity<TransactionDTO> create(
             @RequestHeader("X-User-Id") Long userId,
-            @Valid @RequestBody Transaction transaction) {
-        transaction.setUserId(userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(transactionService.create(transaction));
+            @Valid @RequestBody TransactionDTO transactionDto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(transactionService.create(userId, transactionDto));
     }
 
     // PUT /api/transactions/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<Transaction> update(
+    public ResponseEntity<TransactionDTO> update(
             @PathVariable Long id,
-            @Valid @RequestBody Transaction transaction) {
-        return ResponseEntity.ok(transactionService.update(id, transaction));
+            @Valid @RequestBody TransactionDTO transactionDto) {
+        return ResponseEntity.ok(transactionService.update(id, transactionDto));
     }
 
     // DELETE /api/transactions/{id}

@@ -34,4 +34,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     // Sum of all expenses for user
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.type = 'EXPENSE' AND t.userId = :userId")
     java.math.BigDecimal sumExpense(Long userId);
+
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.type = 'EXPENSE' AND t.userId = :userId AND t.date BETWEEN :startDate AND :endDate")
+    java.math.BigDecimal sumExpenseByDateRange(Long userId, LocalDate startDate, LocalDate endDate);
 }

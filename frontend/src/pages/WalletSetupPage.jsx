@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wallet, ChevronDown, ArrowRight, Loader2, Sparkles, DollarSign, Coins } from 'lucide-react';
-import axios from 'axios';
+import { walletApi } from '../services/api';
 
 const CURRENCIES = [
     { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸' },
@@ -47,20 +47,18 @@ export default function WalletSetupPage() {
 
         setLoading(true);
         try {
-            await axios.post('/api/wallets', {
+            await walletApi.create({
                 name: walletName,
                 balance: parseFloat(balance),
                 currency: currency,
                 note: note || null,
-            }, {
-                headers: { 'X-User-Id': user.id }
             });
 
             // Update localStorage to mark user as having a wallet
             const updatedUser = { ...user, hasWallet: true };
             localStorage.setItem('user', JSON.stringify(updatedUser));
 
-            navigate('/');
+            navigate('/dashboard');
         } catch (err) {
             const msg = err.response?.data?.message || 'Failed to create wallet. Please try again.';
             setError(msg);

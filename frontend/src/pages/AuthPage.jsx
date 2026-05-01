@@ -7,11 +7,7 @@ export default function AuthPage() {
     const navigate = useNavigate();
     // Views: 'auth' (Login/Register slider), 'forgot', 'verification'
     const [view, setView] = useState('auth');
-    // isLogin determines the position of the slider when view is 'auth'
     const [isLogin, setIsLogin] = useState(true);
-    // Verification code state (6 digits)
-    const [otp, setOtp] = useState(['', '', '', '', '', '']);
-    const [timer, setTimer] = useState(59);
 
     // ─── Form state ─────────────────────────────────────────
     const [loginEmail, setLoginEmail] = useState('');
@@ -26,6 +22,9 @@ export default function AuthPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+
+    const [otp, setOtp] = useState(['', '', '', '', '', '']);
+    const [timer, setTimer] = useState(59);
 
     useEffect(() => {
         let interval;
@@ -45,10 +44,7 @@ export default function AuthPage() {
 
     const handleOtpChange = (element, index) => {
         if (isNaN(element.value)) return false;
-
         setOtp([...otp.map((d, idx) => (idx === index ? element.value : d))]);
-
-        // Focus next input
         if (element.nextSibling && element.value !== "") {
             element.nextSibling.focus();
         }
@@ -72,7 +68,7 @@ export default function AuthPage() {
             localStorage.setItem('user', JSON.stringify(res.data));
             setSuccess('Login successful! Redirecting...');
             // Redirect new users to wallet setup, existing users to dashboard
-            const destination = res.data.hasWallet ? '/' : '/setup-wallet';
+            const destination = res.data.hasWallet ? '/dashboard' : '/setup-wallet';
             setTimeout(() => navigate(destination), 1500);
         } catch (err) {
             const msg = err.response?.data?.message || 'Invalid email or password.';
@@ -118,9 +114,8 @@ export default function AuthPage() {
 
     return (
         <div className="flex min-h-screen bg-[#fcfdfc] font-sans selection:bg-emerald-100 selection:text-emerald-900">
-            {/* ================= LEFT COLUMN (Static Brand Section) ================= */}
+            {/* LEFT COLUMN */}
             <div className="relative hidden w-1/2 lg:flex flex-col justify-between p-16 overflow-hidden bg-emerald-900">
-                {/* Background Image/Pattern Overlay */}
                 <div className="absolute inset-0 opacity-30 bg-[url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80')] bg-cover bg-center mix-blend-overlay" />
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/40 via-emerald-800/80 to-emerald-950/95" />
 
@@ -156,11 +151,10 @@ export default function AuthPage() {
                 </div>
             </div>
 
-            {/* ================= RIGHT COLUMN (Dynamic Content) ================= */}
+            {/* RIGHT COLUMN */}
             <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-24 bg-white relative overflow-hidden">
                 <div className="w-full max-w-md relative z-10">
 
-                    {/* View: Auth (Login/Register Slider) */}
                     {view === 'auth' && (
                         <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                             <div className="text-center mb-10">
@@ -168,28 +162,6 @@ export default function AuthPage() {
                                 <p className="text-gray-500 font-medium">Access your vault or join the ecosystem</p>
                             </div>
 
-                            {/* Toggle Slider */}
-                            <div className="flex bg-gray-100 p-1.5 rounded-2xl mb-10 relative border border-gray-200/50 shadow-inner">
-                                <div
-                                    className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-white rounded-xl shadow-md transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${isLogin ? 'translate-x-0' : 'translate-x-full'}`}
-                                ></div>
-
-                                <button
-                                    onClick={() => setIsLogin(true)}
-                                    className={`flex-1 py-3 text-sm font-bold relative z-10 transition-colors duration-300 ${isLogin ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
-                                >
-                                    Sign In
-                                </button>
-
-                                <button
-                                    onClick={() => setIsLogin(false)}
-                                    className={`flex-1 py-3 text-sm font-bold relative z-10 transition-colors duration-300 ${!isLogin ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
-                                >
-                                    Register
-                                </button>
-                            </div>
-
-                            {/* Feedback Messages */}
                             {error && (
                                 <div className="mb-6 flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300">
                                     <AlertCircle size={18} className="shrink-0" />
@@ -202,6 +174,16 @@ export default function AuthPage() {
                                     {success}
                                 </div>
                             )}
+
+                            <div className="flex bg-gray-100 p-1.5 rounded-2xl mb-10 relative border border-gray-200/50 shadow-inner">
+                                <div className={cn(
+                                    "absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-white rounded-xl shadow-md transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)",
+                                    isLogin ? 'translate-x-0' : 'translate-x-full'
+                                )}></div>
+
+                                <button onClick={() => {setIsLogin(true); setError(''); setSuccess('');}} className={cn("flex-1 py-3 text-sm font-bold relative z-10 transition-colors duration-300", isLogin ? 'text-gray-900' : 'text-gray-400')}>Sign In</button>
+                                <button onClick={() => {setIsLogin(false); setError(''); setSuccess('');}} className={cn("flex-1 py-3 text-sm font-bold relative z-10 transition-colors duration-300", !isLogin ? 'text-gray-900' : 'text-gray-400')}>Register</button>
+                            </div>
 
                             {/* Forms Container */}
                             <div className="relative overflow-hidden">
@@ -228,13 +210,7 @@ export default function AuthPage() {
                                             <div>
                                                 <div className="flex justify-between mb-3">
                                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Password</label>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setView('forgot')}
-                                                        className="text-xs font-bold text-emerald-700 hover:text-emerald-800 transition-colors"
-                                                    >
-                                                        Forgot Password?
-                                                    </button>
+                                                    <button type="button" onClick={() => setView('forgot')} className="text-xs font-bold text-emerald-700">Forgot Password?</button>
                                                 </div>
                                                 <div className="relative group">
                                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-600 transition-colors" size={20} />
@@ -291,7 +267,7 @@ export default function AuthPage() {
                                                 </div>
                                             </div>
                                             <div>
-                                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Create Password</label>
+                                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Password</label>
                                                 <div className="relative group">
                                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-600 transition-colors" size={20} />
                                                     <input
@@ -334,93 +310,43 @@ export default function AuthPage() {
                         </div>
                     )}
 
-                    {/* View: Forgot Password */}
+                    {/* Forgot Password View */}
                     {view === 'forgot' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className="text-center mb-10">
-                                <h2 className="text-4xl font-bold text-gray-900 mb-4 tracking-tight text-center">Forgot Password</h2>
-                                <p className="text-gray-500 font-medium max-w-sm mx-auto leading-relaxed">
-                                    Enter the email address associated with your account and we'll send you a code to reset your password.
-                                </p>
+                                <h2 className="text-4xl font-bold text-gray-900 mb-4 tracking-tight">Forgot Password</h2>
+                                <p className="text-gray-500 font-medium max-w-sm mx-auto leading-relaxed">Enter your email and we'll send you a code.</p>
                             </div>
-
                             <form className="space-y-8">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Email Address</label>
                                     <div className="relative group">
-                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-600 transition-colors" size={20} />
-                                        <input
-                                            type="email"
-                                            placeholder="name@example.com"
-                                            className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-gray-900 shadow-sm"
-                                        />
+                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-600" size={20} />
+                                        <input type="email" placeholder="name@example.com" className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:bg-white" />
                                     </div>
                                 </div>
-
-                                <button
-                                    type="button"
-                                    onClick={() => setView('verification')}
-                                    className="w-full py-4 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-2xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-emerald-900/20 hover:shadow-emerald-900/30"
-                                >
-                                    Send reset code <ArrowRight size={20} />
-                                </button>
-
-                                <div className="text-center">
-                                    <button
-                                        type="button"
-                                        onClick={() => setView('auth')}
-                                        className="text-sm font-bold text-emerald-700 hover:text-emerald-800 flex items-center justify-center gap-2 mx-auto transition-colors"
-                                    >
-                                        <ArrowLeft size={16} /> Back to login
-                                    </button>
-                                </div>
+                                <button type="button" onClick={() => setView('verification')} className="w-full py-4 bg-emerald-800 text-white font-bold rounded-2xl">Send reset code</button>
+                                <button type="button" onClick={() => setView('auth')} className="w-full text-sm font-bold text-emerald-700 flex items-center justify-center gap-2"><ArrowLeft size={16} /> Back to login</button>
                             </form>
                         </div>
                     )}
 
-                    {/* View: Verification */}
+                    {/* Verification View */}
                     {view === 'verification' && (
-                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="text-center mb-12">
-                                <h2 className="text-4xl font-bold text-gray-900 mb-4 tracking-tight">Check your email</h2>
-                                <p className="text-gray-500 font-medium leading-relaxed max-w-sm mx-auto">
-                                    We sent a 6-digit code to <span className="text-gray-900 font-bold">n***@gmail.com</span>. Enter it below to continue.
-                                </p>
-                            </div>
-
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 text-center">
+                            <h2 className="text-4xl font-bold text-gray-900 mb-4">Check your email</h2>
+                            <p className="text-gray-500 mb-12">Enter the 6-digit code we sent you.</p>
                             <div className="flex justify-between gap-2 mb-10">
-                                {otp.map((data, index) => {
-                                    return (
-                                        <input
-                                            className="w-12 h-14 sm:w-14 sm:h-16 text-2xl font-bold text-center bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all"
-                                            type="text"
-                                            name="otp"
-                                            maxLength="1"
-                                            key={index}
-                                            value={data}
-                                            onChange={(e) => handleOtpChange(e.target, index)}
-                                            onFocus={(e) => e.target.select()}
-                                        />
-                                    );
-                                })}
+                                {otp.map((data, index) => (
+                                    <input key={index} className="w-12 h-14 text-2xl font-bold text-center bg-gray-50 border rounded-xl" type="text" maxLength="1" value={data} onChange={(e) => handleOtpChange(e.target, index)} />
+                                ))}
                             </div>
-
-                            <div className="text-center space-y-6">
-                                <p className="text-sm font-medium text-gray-400">
-                                    Resend code in <span className="text-emerald-600 font-bold">0:{timer < 10 ? `0${timer}` : timer}</span>
-                                </p>
-
-                                <button
-                                    onClick={() => setView('auth')}
-                                    className="text-sm font-bold text-emerald-700 hover:text-emerald-800 flex items-center justify-center gap-2 mx-auto transition-colors"
-                                >
-                                    <ArrowLeft size={16} /> Back to login
-                                </button>
-                            </div>
+                            <p className="text-sm text-gray-400">Resend in <span className="text-emerald-600 font-bold">0:{timer < 10 ? `0${timer}` : timer}</span></p>
+                            <button onClick={() => setView('auth')} className="mt-8 text-sm font-bold text-emerald-700 flex items-center justify-center gap-2 mx-auto"><ArrowLeft size={16} /> Back to login</button>
                         </div>
                     )}
 
-                    {/* Footer Social (Shared across all but Verification) */}
+                    {/* Footer Social */}
                     {view !== 'verification' && (
                         <div className="mt-12">
                             <div className="relative flex items-center justify-center mb-10">
@@ -428,26 +354,18 @@ export default function AuthPage() {
                                 <span className="absolute px-4 bg-white text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">Secure Gateway</span>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <button className="flex items-center justify-center gap-3 py-3.5 border border-gray-100 rounded-2xl hover:bg-gray-50 transition-all font-bold text-sm text-gray-700 shadow-sm active:scale-95">
-                                    <img src="https://www.svgrepo.com/show/355037/google.svg" className="w-5 h-5" alt="Google" /> Google
-                                </button>
-                                <button className="flex items-center justify-center gap-3 py-3.5 border border-gray-100 rounded-2xl hover:bg-gray-50 transition-all font-bold text-sm text-gray-700 shadow-sm active:scale-95">
-                                    <img src="https://www.svgrepo.com/show/441490/apple.svg" className="w-5 h-5" alt="Apple" /> Apple
-                                </button>
+                                <button className="flex items-center justify-center gap-3 py-3.5 border rounded-2xl font-bold text-sm text-gray-700"><img src="https://www.svgrepo.com/show/355037/google.svg" className="w-5 h-5" /> Google</button>
+                                <button className="flex items-center justify-center gap-3 py-3.5 border rounded-2xl font-bold text-sm text-gray-700"><img src="https://www.svgrepo.com/show/441490/apple.svg" className="w-5 h-5" /> Apple</button>
                             </div>
-
-                            <p className="mt-12 text-center text-xs text-gray-400 leading-relaxed font-medium">
-                                By proceeding, you agree to our <span className="text-emerald-700 font-bold underline cursor-pointer">Terms of Service</span> and <span className="text-emerald-700 font-bold underline cursor-pointer">Security Protocols</span>.
-                            </p>
                         </div>
                     )}
-
                 </div>
-
-                {/* Decorative Elements */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50 rounded-full blur-3xl -z-10 opacity-50"></div>
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-50/50 rounded-full blur-3xl -z-10 opacity-30"></div>
             </div>
         </div>
     );
+}
+
+// Utility function for conditional classes
+function cn(...classes) {
+    return classes.filter(Boolean).join(' ');
 }

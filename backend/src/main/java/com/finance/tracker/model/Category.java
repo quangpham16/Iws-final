@@ -28,9 +28,11 @@ public class Category {
     @Column(name = "color_hex")
     private String colorHex;
 
+    @Builder.Default
     @Column(name = "is_system")
     private Boolean isSystem = false;
 
+    @Builder.Default
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

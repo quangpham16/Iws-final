@@ -1,10 +1,11 @@
 package com.finance.tracker.controller;
 
-import com.finance.tracker.model.Tag;
-import com.finance.tracker.repository.TagRepository;
+import com.finance.tracker.dto.TagDTO;
+import com.finance.tracker.service.TagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -12,24 +13,21 @@ import java.util.List;
 @RequestMapping("/api/tags")
 @RequiredArgsConstructor
 public class TagController {
-    private final TagRepository tagRepository;
+    private final TagService tagService;
 
     @GetMapping
-    public List<Tag> getAll(@RequestHeader("X-User-Id") Long userId) {
-        return tagRepository.findByUserId(userId);
+    public List<TagDTO> getAll(@RequestHeader("X-User-Id") Long userId) {
+        return tagService.getAllTags(userId);
     }
 
     @PostMapping
-    public ResponseEntity<Tag> create(@RequestHeader("X-User-Id") Long userId, @RequestBody Tag tag) {
-        tag.setUserId(userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(tagRepository.save(tag));
+    public ResponseEntity<TagDTO> create(@RequestHeader("X-User-Id") Long userId, @RequestBody TagDTO tagDTO) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(tagService.createTag(userId, tagDTO));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@RequestHeader("X-User-Id") Long userId, @PathVariable Long id) {
-        tagRepository.findById(id).ifPresent(t -> {
-            if (t.getUserId().equals(userId)) tagRepository.delete(t);
-        });
+    public ResponseEntity<Void> delete(@RequestHeader("X-User-Id") @NonNull Long userId, @PathVariable @NonNull Long id) {
+        tagService.deleteTag(userId, id);
         return ResponseEntity.noContent().build();
     }
 }

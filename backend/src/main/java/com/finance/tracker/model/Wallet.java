@@ -21,9 +21,6 @@ public class Wallet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id")
-    private Long userId;
-
     @NotBlank(message = "Name is required")
     @Column(nullable = false)
     private String name;
@@ -32,14 +29,15 @@ public class Wallet {
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal balance;
 
-    @Column(length = 10)
-    @Builder.Default
-    private String currency = "USD";
+    @Column(name = "currency", nullable = false) // Bạn có thể bỏ nullable = false nếu không bắt buộc
+    private String currency;
+
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     @Column(length = 500)
     private String note;
 
-    @Column(nullable = false, updatable = false)
-    @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
 }

@@ -1,6 +1,6 @@
 package com.finance.tracker.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,6 +8,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "transactions")
@@ -49,7 +50,36 @@ public class Transaction {
     @Column(length = 500)
     private String note;
 
+    @Column(name = "payee_id")
+    private Long payeeId;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private TransactionStatus status = TransactionStatus.cleared;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private TransactionSource source = TransactionSource.manual;
+
+    @Builder.Default
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Builder.Default
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
     public enum TransactionType {
         INCOME, EXPENSE
+    }
+
+    public enum TransactionStatus {
+        pending, cleared, reconciled
+    }
+
+    public enum TransactionSource {
+        manual, csv_import, bank_sync, recurring
     }
 }

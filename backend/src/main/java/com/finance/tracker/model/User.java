@@ -33,18 +33,23 @@ public class User {
     @Column(name = "full_name")
     private String fullName;
 
+    @Builder.Default
     @Column(name = "base_currency_code")
     private String baseCurrencyCode = "VND";
 
+    @Builder.Default
     @Column(name = "timezone")
     private String timezone = "Asia/Ho_Chi_Minh";
 
+    @Builder.Default
     @Column(name = "locale")
     private String locale = "vi_VN";
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private UserStatus status = UserStatus.active;
 
+    @Builder.Default
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

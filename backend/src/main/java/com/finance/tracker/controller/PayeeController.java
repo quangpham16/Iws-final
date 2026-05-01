@@ -1,10 +1,11 @@
 package com.finance.tracker.controller;
 
-import com.finance.tracker.model.Payee;
-import com.finance.tracker.repository.PayeeRepository;
+import com.finance.tracker.dto.PayeeDTO;
+import com.finance.tracker.service.PayeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -12,24 +13,21 @@ import java.util.List;
 @RequestMapping("/api/payees")
 @RequiredArgsConstructor
 public class PayeeController {
-    private final PayeeRepository payeeRepository;
+    private final PayeeService payeeService;
 
     @GetMapping
-    public List<Payee> getAll(@RequestHeader("X-User-Id") Long userId) {
-        return payeeRepository.findByUserId(userId);
+    public List<PayeeDTO> getAll(@RequestHeader("X-User-Id") Long userId) {
+        return payeeService.getAllPayees(userId);
     }
 
     @PostMapping
-    public ResponseEntity<Payee> create(@RequestHeader("X-User-Id") Long userId, @RequestBody Payee payee) {
-        payee.setUserId(userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(payeeRepository.save(payee));
+    public ResponseEntity<PayeeDTO> create(@RequestHeader("X-User-Id") Long userId, @RequestBody PayeeDTO payeeDTO) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(payeeService.createPayee(userId, payeeDTO));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@RequestHeader("X-User-Id") Long userId, @PathVariable Long id) {
-        payeeRepository.findById(id).ifPresent(p -> {
-            if (p.getUserId().equals(userId)) payeeRepository.delete(p);
-        });
+    public ResponseEntity<Void> delete(@RequestHeader("X-User-Id") @NonNull Long userId, @PathVariable @NonNull Long id) {
+        payeeService.deletePayee(userId, id);
         return ResponseEntity.noContent().build();
     }
 }
