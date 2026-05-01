@@ -23,12 +23,8 @@ const sidebarItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Wallet, label: 'Wallets', path: '/wallets' },
     { icon: ArrowLeftRight, label: 'Transactions', path: '/transactions' },
-    { icon: Tag, label: 'Categories', path: '/categories' },
     { icon: Target, label: 'Budgets', path: '/budgets' },
     { icon: Trophy, label: 'Goals', path: '/goals' },
-    { icon: RefreshCcw, label: 'Subscriptions', path: '/subscriptions' },
-    { icon: Users, label: 'Payees', path: '/payees' },
-    { icon: Hash, label: 'Tags', path: '/tags' },
     { icon: BarChart3, label: 'Reports', path: '/reports' },
     { icon: Settings, label: 'Settings', path: '/settings' },
 ];
