@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Lock, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, ArrowRight, ArrowLeft, User, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { authApi } from '../api/authApi';
 
 export default function AuthPage() {
+    const navigate = useNavigate();
     // Views: 'auth' (Login/Register slider), 'forgot', 'verification'
     const [view, setView] = useState('auth');
     // isLogin determines the position of the slider when view is 'auth'
@@ -9,6 +12,20 @@ export default function AuthPage() {
     // Verification code state (6 digits)
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [timer, setTimer] = useState(59);
+
+    // ─── Form state ─────────────────────────────────────────
+    const [loginEmail, setLoginEmail] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
+
+    const [regEmail, setRegEmail] = useState('');
+    const [regFullName, setRegFullName] = useState('');
+    const [regPassword, setRegPassword] = useState('');
+    const [regConfirm, setRegConfirm] = useState('');
+
+    // ─── UI feedback ────────────────────────────────────────
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
     useEffect(() => {
         let interval;
@@ -20,6 +37,12 @@ export default function AuthPage() {
         return () => clearInterval(interval);
     }, [view, timer]);
 
+    // Clear messages when switching tabs
+    useEffect(() => {
+        setError('');
+        setSuccess('');
+    }, [isLogin, view]);
+
     const handleOtpChange = (element, index) => {
         if (isNaN(element.value)) return false;
 
@@ -28,6 +51,68 @@ export default function AuthPage() {
         // Focus next input
         if (element.nextSibling && element.value !== "") {
             element.nextSibling.focus();
+        }
+    };
+
+    // ─── Login handler ──────────────────────────────────────
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setError('');
+        setSuccess('');
+
+        if (!loginEmail || !loginPassword) {
+            setError('Please fill in all fields.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const res = await authApi.login(loginEmail, loginPassword);
+            // Store user data in localStorage
+            localStorage.setItem('user', JSON.stringify(res.data));
+            setSuccess('Login successful! Redirecting...');
+            // Redirect new users to wallet setup, existing users to dashboard
+            const destination = res.data.hasWallet ? '/' : '/setup-wallet';
+            setTimeout(() => navigate(destination), 1500);
+        } catch (err) {
+            const msg = err.response?.data?.message || 'Invalid email or password.';
+            setError(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // ─── Register handler ───────────────────────────────────
+    const handleRegister = async (e) => {
+        e.preventDefault();
+        setError('');
+        setSuccess('');
+
+        if (!regEmail || !regPassword || !regConfirm) {
+            setError('Please fill in all fields.');
+            return;
+        }
+        if (regPassword !== regConfirm) {
+            setError('Passwords do not match.');
+            return;
+        }
+        if (regPassword.length < 6) {
+            setError('Password must be at least 6 characters.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const res = await authApi.register(regEmail, regPassword, regFullName);
+            // Store user data and redirect to wallet setup
+            localStorage.setItem('user', JSON.stringify(res.data));
+            setSuccess('Account created! Setting up your wallet...');
+            setTimeout(() => navigate('/setup-wallet'), 1500);
+        } catch (err) {
+            const msg = err.response?.data?.message || 'Registration failed. Please try again.';
+            setError(msg);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -104,6 +189,20 @@ export default function AuthPage() {
                                 </button>
                             </div>
 
+                            {/* Feedback Messages */}
+                            {error && (
+                                <div className="mb-6 flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <AlertCircle size={18} className="shrink-0" />
+                                    {error}
+                                </div>
+                            )}
+                            {success && (
+                                <div className="mb-6 flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-700 text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <CheckCircle size={18} className="shrink-0" />
+                                    {success}
+                                </div>
+                            )}
+
                             {/* Forms Container */}
                             <div className="relative overflow-hidden">
                                 <div
@@ -112,7 +211,7 @@ export default function AuthPage() {
                                 >
                                     {/* Login Form */}
                                     <div className="w-1/2 px-1">
-                                        <form className="space-y-6">
+                                        <form className="space-y-6" onSubmit={handleLogin}>
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Email Address</label>
                                                 <div className="relative group">
@@ -120,6 +219,8 @@ export default function AuthPage() {
                                                     <input
                                                         type="email"
                                                         placeholder="name@example.com"
+                                                        value={loginEmail}
+                                                        onChange={(e) => setLoginEmail(e.target.value)}
                                                         className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-gray-900"
                                                     />
                                                 </div>
@@ -140,42 +241,91 @@ export default function AuthPage() {
                                                     <input
                                                         type="password"
                                                         placeholder="••••••••"
+                                                        value={loginPassword}
+                                                        onChange={(e) => setLoginPassword(e.target.value)}
                                                         className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-gray-900"
                                                     />
                                                 </div>
                                             </div>
-                                            <button className="w-full py-4 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-2xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-emerald-900/20 hover:shadow-emerald-900/30 hover:-translate-y-0.5">
-                                                Authenticate Vault <ArrowRight size={20} />
+                                            <button
+                                                type="submit"
+                                                disabled={loading}
+                                                className="w-full py-4 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-2xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-emerald-900/20 hover:shadow-emerald-900/30 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                                            >
+                                                {loading && isLogin ? (
+                                                    <><Loader2 size={20} className="animate-spin" /> Authenticating...</>
+                                                ) : (
+                                                    <>Authenticate Vault <ArrowRight size={20} /></>
+                                                )}
                                             </button>
                                         </form>
                                     </div>
 
                                     {/* Register Form */}
                                     <div className="w-1/2 px-1">
-                                        <form className="space-y-5">
+                                        <form className="space-y-5" onSubmit={handleRegister}>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Full Name</label>
+                                                <div className="relative group">
+                                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-600 transition-colors" size={20} />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="John Doe"
+                                                        value={regFullName}
+                                                        onChange={(e) => setRegFullName(e.target.value)}
+                                                        className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-gray-900"
+                                                    />
+                                                </div>
+                                            </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Email Address</label>
                                                 <div className="relative group">
                                                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-600 transition-colors" size={20} />
-                                                    <input type="email" placeholder="name@example.com" className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-gray-900" />
+                                                    <input
+                                                        type="email"
+                                                        placeholder="name@example.com"
+                                                        value={regEmail}
+                                                        onChange={(e) => setRegEmail(e.target.value)}
+                                                        className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-gray-900"
+                                                    />
                                                 </div>
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Create Password</label>
                                                 <div className="relative group">
                                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-600 transition-colors" size={20} />
-                                                    <input type="password" placeholder="••••••••" className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-gray-900" />
+                                                    <input
+                                                        type="password"
+                                                        placeholder="••••••••"
+                                                        value={regPassword}
+                                                        onChange={(e) => setRegPassword(e.target.value)}
+                                                        className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-gray-900"
+                                                    />
                                                 </div>
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Confirm Password</label>
                                                 <div className="relative group">
                                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-600 transition-colors" size={20} />
-                                                    <input type="password" placeholder="••••••••" className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-gray-900" />
+                                                    <input
+                                                        type="password"
+                                                        placeholder="••••••••"
+                                                        value={regConfirm}
+                                                        onChange={(e) => setRegConfirm(e.target.value)}
+                                                        className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-gray-900"
+                                                    />
                                                 </div>
                                             </div>
-                                            <button className="w-full py-4 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-2xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-emerald-900/20 hover:shadow-emerald-900/30 hover:-translate-y-0.5">
-                                                Register Account <ArrowRight size={20} />
+                                            <button
+                                                type="submit"
+                                                disabled={loading}
+                                                className="w-full py-4 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-2xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-emerald-900/20 hover:shadow-emerald-900/30 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                                            >
+                                                {loading && !isLogin ? (
+                                                    <><Loader2 size={20} className="animate-spin" /> Creating Account...</>
+                                                ) : (
+                                                    <>Register Account <ArrowRight size={20} /></>
+                                                )}
                                             </button>
                                         </form>
                                     </div>
