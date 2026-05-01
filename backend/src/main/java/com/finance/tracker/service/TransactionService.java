@@ -4,7 +4,9 @@ import com.finance.tracker.dto.TransactionDTO;
 import com.finance.tracker.mapper.TransactionMapper;
 import com.finance.tracker.model.Transaction;
 import com.finance.tracker.model.Transaction.TransactionType;
+import com.finance.tracker.model.Wallet;
 import com.finance.tracker.repository.TransactionRepository;
+import com.finance.tracker.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,7 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
+    private final WalletRepository walletRepository;
 
     // ── Read ──────────────────────────────────────────────────────────────────
 
@@ -87,27 +90,84 @@ public class TransactionService {
     public TransactionDTO create(Long userId, TransactionDTO dto) {
         Transaction entity = transactionMapper.toEntity(dto);
         entity.setUserId(userId);
-        return transactionMapper.toDTO(transactionRepository.save(entity));
+        Transaction saved = transactionRepository.save(entity);
+
+        // Adjust wallet balance
+        if (saved.getWalletId() != null) {
+            Wallet wallet = walletRepository.findById(saved.getWalletId())
+                    .orElseThrow(() -> new RuntimeException("Wallet not found with id: " + saved.getWalletId()));
+            if (saved.getType() == TransactionType.INCOME) {
+                wallet.setBalance(wallet.getBalance().add(saved.getAmount()));
+            } else {
+                wallet.setBalance(wallet.getBalance().subtract(saved.getAmount()));
+            }
+            walletRepository.save(wallet);
+        }
+
+        return transactionMapper.toDTO(saved);
     }
 
     public TransactionDTO update(Long id, TransactionDTO updatedDto) {
         Transaction existing = transactionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transaction not found with id: " + id));
         
+        // Reverse old wallet balance
+        if (existing.getWalletId() != null) {
+            Wallet oldWallet = walletRepository.findById(existing.getWalletId())
+                    .orElse(null);
+            if (oldWallet != null) {
+                if (existing.getType() == TransactionType.INCOME) {
+                    oldWallet.setBalance(oldWallet.getBalance().subtract(existing.getAmount()));
+                } else {
+                    oldWallet.setBalance(oldWallet.getBalance().add(existing.getAmount()));
+                }
+                walletRepository.save(oldWallet);
+            }
+        }
+
         existing.setTitle(updatedDto.getTitle());
         existing.setAmount(updatedDto.getAmount());
         existing.setType(updatedDto.getType());
         existing.setCategory(updatedDto.getCategory());
         existing.setDate(updatedDto.getDate());
         existing.setNote(updatedDto.getNote());
+        existing.setWalletId(updatedDto.getWalletId());
         
-        return transactionMapper.toDTO(transactionRepository.save(existing));
+        Transaction saved = transactionRepository.save(existing);
+
+        // Apply new wallet balance
+        if (saved.getWalletId() != null) {
+            Wallet newWallet = walletRepository.findById(saved.getWalletId())
+                    .orElseThrow(() -> new RuntimeException("Wallet not found with id: " + saved.getWalletId()));
+            if (saved.getType() == TransactionType.INCOME) {
+                newWallet.setBalance(newWallet.getBalance().add(saved.getAmount()));
+            } else {
+                newWallet.setBalance(newWallet.getBalance().subtract(saved.getAmount()));
+            }
+            walletRepository.save(newWallet);
+        }
+
+        return transactionMapper.toDTO(saved);
     }
 
     public void delete(Long id) {
-        if (!transactionRepository.existsById(id)) {
-            throw new RuntimeException("Transaction not found with id: " + id);
+        Transaction existing = transactionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transaction not found with id: " + id));
+
+        // Reverse wallet balance before deleting
+        if (existing.getWalletId() != null) {
+            Wallet wallet = walletRepository.findById(existing.getWalletId())
+                    .orElse(null);
+            if (wallet != null) {
+                if (existing.getType() == TransactionType.INCOME) {
+                    wallet.setBalance(wallet.getBalance().subtract(existing.getAmount()));
+                } else {
+                    wallet.setBalance(wallet.getBalance().add(existing.getAmount()));
+                }
+                walletRepository.save(wallet);
+            }
         }
+
         transactionRepository.deleteById(id);
     }
 }

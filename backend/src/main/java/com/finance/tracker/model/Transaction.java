@@ -53,6 +53,9 @@ public class Transaction {
     @Column(name = "payee_id")
     private Long payeeId;
 
+    @Column(name = "wallet_id")
+    private Long walletId;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

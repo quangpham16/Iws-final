@@ -25,6 +25,7 @@ public class TransactionDTO {
     private LocalDate date;
     private String note;
     private Long payeeId;
+    private Long walletId;
     private TransactionStatus status;
     private TransactionSource source;
     private LocalDateTime createdAt;

@@ -17,6 +17,7 @@ public class TransactionMapper {
                 .category(entity.getCategory())
                 .date(entity.getDate())
                 .note(entity.getNote())
+                .walletId(entity.getWalletId())
                 .build();
     }
 
@@ -30,6 +31,7 @@ public class TransactionMapper {
                 .category(dto.getCategory())
                 .date(dto.getDate())
                 .note(dto.getNote())
+                .walletId(dto.getWalletId())
                 .build();
     }
 }
