@@ -34,3 +34,4 @@ backend/target/
 *.swo
 node_modules
 node_modules
+node_modules

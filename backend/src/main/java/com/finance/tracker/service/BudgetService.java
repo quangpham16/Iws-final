@@ -47,4 +47,25 @@ public class BudgetService {
             }
         });
     }
+
+    @Transactional
+    public BudgetDTO updateBudget(Long userId, Long id, BudgetDTO dto) {
+        Budget existing = budgetRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Budget not found"));
+        if (!existing.getUserId().equals(userId)) {
+            throw new RuntimeException("Unauthorized access to budget");
+        }
+        
+        existing.setName(dto.getName());
+        if (dto.getPeriodType() != null) {
+            existing.setPeriodType(Budget.PeriodType.valueOf(dto.getPeriodType()));
+        }
+        existing.setStartDate(dto.getStartDate());
+        existing.setEndDate(dto.getEndDate());
+        existing.setAmount(dto.getAmount());
+        
+        Budget saved = budgetRepository.save(existing);
+        BigDecimal spent = transactionRepository.sumExpenseByDateRange(userId, saved.getStartDate(), saved.getEndDate());
+        return budgetMapper.toDTO(saved, spent);
+    }
 }

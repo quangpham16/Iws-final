@@ -9,15 +9,11 @@ import {
     LogOut,
     Bell,
     Search,
-    User,
-    Tag,
     Target,
-    Trophy,
-    RefreshCcw,
-    Users,
-    Hash
+    Trophy
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const sidebarItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -88,7 +84,7 @@ export default function Layout({ children }) {
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header */}
-                <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 flex items-center justify-between sticky top-0 z-10">
+                <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 flex items-center justify-between sticky top-0 z-[100]">
                     <div className="flex items-center gap-4 bg-slate-100 px-4 py-2 rounded-2xl w-96 group focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
                         <Search size={18} className="text-slate-400 group-focus-within:text-emerald-500" />
                         <input 
@@ -121,8 +117,18 @@ export default function Layout({ children }) {
                 </header>
 
                 {/* Page Content */}
-                <main className="flex-1 overflow-y-auto p-8">
-                    {children}
+                <main className="flex-1 overflow-y-auto p-8 bg-[#F8FAFC]">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={location.pathname}
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -15 }}
+                            transition={{ duration: 0.2, ease: 'easeInOut' }}
+                        >
+                            {children}
+                        </motion.div>
+                    </AnimatePresence>
                 </main>
             </div>
         </div>

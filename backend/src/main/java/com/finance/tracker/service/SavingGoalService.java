@@ -40,4 +40,28 @@ public class SavingGoalService {
             }
         });
     }
+
+    @Transactional
+    public SavingGoalDTO updateGoal(Long userId, Long id, SavingGoalDTO dto) {
+        SavingGoal existing = savingGoalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Goal not found"));
+        if (!existing.getUserId().equals(userId)) {
+            throw new RuntimeException("Unauthorized access to goal");
+        }
+
+        existing.setName(dto.getName());
+        existing.setDescription(dto.getDescription());
+        existing.setTargetAmount(dto.getTargetAmount());
+        existing.setCurrentAmount(dto.getCurrentAmount());
+        existing.setCurrencyCode(dto.getCurrencyCode());
+        existing.setTargetDate(dto.getTargetDate());
+        existing.setIcon(dto.getIcon());
+        existing.setColorHex(dto.getColorHex());
+        if (dto.getStatus() != null) {
+            existing.setStatus(SavingGoal.GoalStatus.valueOf(dto.getStatus()));
+        }
+
+        SavingGoal saved = savingGoalRepository.save(existing);
+        return savingGoalMapper.toDTO(saved);
+    }
 }

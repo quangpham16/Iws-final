@@ -12,24 +12,28 @@ import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import Layout from './components/Layout';
 
+import { AnimatePresence } from 'framer-motion';
+
 function App() {
   return (
     <Router>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="/setup-wallet" element={<WalletSetupPage />} />
+      <AnimatePresence mode="wait">
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/setup-wallet" element={<WalletSetupPage />} />
 
-        {/* Protected Routes inside Layout */}
-        <Route path="/dashboard" element={<Layout><DashboardPage /></Layout>} />
-        <Route path="/wallets" element={<Layout><WalletsPage /></Layout>} />
-        <Route path="/transactions" element={<Layout><TransactionsPage /></Layout>} />
-        <Route path="/budgets" element={<Layout><BudgetsPage /></Layout>} />
-        <Route path="/goals" element={<Layout><GoalsPage /></Layout>} />
-        <Route path="/reports" element={<Layout><ReportsPage /></Layout>} />
-        <Route path="/settings" element={<Layout><SettingsPage /></Layout>} />
-      </Routes>
+          {/* Protected Routes inside Layout */}
+          <Route path="/dashboard" element={<Layout><DashboardPage /></Layout>} />
+          <Route path="/wallets" element={<Layout><WalletsPage /></Layout>} />
+          <Route path="/transactions" element={<Layout><TransactionsPage /></Layout>} />
+          <Route path="/budgets" element={<Layout><BudgetsPage /></Layout>} />
+          <Route path="/goals" element={<Layout><GoalsPage /></Layout>} />
+          <Route path="/reports" element={<Layout><ReportsPage /></Layout>} />
+          <Route path="/settings" element={<Layout><SettingsPage /></Layout>} />
+        </Routes>
+      </AnimatePresence>
     </Router>
   );
 }

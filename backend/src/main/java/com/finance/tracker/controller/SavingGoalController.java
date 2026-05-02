@@ -30,4 +30,9 @@ public class SavingGoalController {
         savingGoalService.deleteGoal(userId, id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<SavingGoalDTO> update(@RequestHeader("X-User-Id") Long userId, @PathVariable Long id, @RequestBody SavingGoalDTO goalDTO) {
+        return ResponseEntity.ok(savingGoalService.updateGoal(userId, id, goalDTO));
+    }
 }
