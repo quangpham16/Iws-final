@@ -1,6 +1,7 @@
 package com.finance.tracker.service;
 
 import com.finance.tracker.dto.WalletDTO;
+import com.finance.tracker.exception.ResourceNotFoundException;
 import com.finance.tracker.mapper.WalletMapper;
 import com.finance.tracker.model.Wallet;
 import com.finance.tracker.repository.WalletRepository;
@@ -34,7 +35,7 @@ public class WalletService {
     public WalletDTO findById(Long id) {
         return walletRepository.findById(id)
                 .map(walletMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("Wallet not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Wallet", id));
     }
 
     @Transactional(readOnly = true)
@@ -54,12 +55,13 @@ public class WalletService {
     public WalletDTO create(Long userId, WalletDTO dto) {
         Wallet entity = walletMapper.toEntity(dto);
         entity.setUserId(userId);
+        entity.setCreatedAt(java.time.LocalDateTime.now());
         return walletMapper.toDTO(walletRepository.save(entity));
     }
 
     public WalletDTO update(Long id, WalletDTO updatedDto) {
         Wallet existing = walletRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Wallet not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Wallet", id));
         existing.setName(updatedDto.getName());
         existing.setBalance(updatedDto.getBalance());
         existing.setCurrency(updatedDto.getCurrency());
@@ -69,7 +71,7 @@ public class WalletService {
 
     public void delete(Long id) {
         if (!walletRepository.existsById(id)) {
-            throw new RuntimeException("Wallet not found with id: " + id);
+            throw new ResourceNotFoundException("Wallet", id);
         }
         walletRepository.deleteById(id);
     }

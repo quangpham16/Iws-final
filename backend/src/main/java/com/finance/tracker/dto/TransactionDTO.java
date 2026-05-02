@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Data
 @Builder
@@ -23,6 +24,7 @@ public class TransactionDTO {
     private TransactionType type;
     private String category;
     private LocalDate date;
+    private LocalTime time;
     private String note;
     private Long payeeId;
     private Long walletId;

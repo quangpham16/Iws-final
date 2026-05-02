@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
     LayoutDashboard,
     Wallet,
@@ -8,8 +8,6 @@ import {
     Settings,
     LogOut,
     Bell,
-    Search,
-    User,
     Tag,
     Target,
     Trophy,
@@ -23,18 +21,29 @@ import {
     ChevronDown,
     Mail,
     Phone,
-    MapPin
+    MapPin,
+    Search,
+    User
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const sidebarItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Wallet, label: 'Wallets', path: '/wallets' },
-    { icon: ArrowLeftRight, label: 'Transactions', path: '/transactions' },
+    { icon: ArrowLeftRight, label: 'Transactions', path: '/transactions', hasSubmenu: true },
     { icon: Target, label: 'Budgets', path: '/budgets' },
     { icon: Trophy, label: 'Goals', path: '/goals' },
     { icon: BarChart3, label: 'Reports', path: '/reports' },
     { icon: Settings, label: 'Settings', path: '/settings', hasSubmenu: true },
+];
+
+// Transaction submenu items
+const transactionTabs = [
+    { id: 'transactions', label: 'Transactions', icon: ArrowLeftRight },
+    { id: 'subscriptions', label: 'Subscriptions', icon: RefreshCcw },
+    { id: 'categories', label: 'Categories', icon: Tag },
+    { id: 'payees', label: 'Payees', icon: Users },
+    { id: 'tags', label: 'Tags', icon: Hash },
 ];
 
 const settingsTabs = [
@@ -101,7 +110,6 @@ function ProfileDropdown({ user, onLogout }) {
     const navigate = useNavigate();
     const dropdownRef = React.useRef(null);
 
-    // Close dropdown when clicking outside
     React.useEffect(() => {
         function handleClickOutside(event) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -150,7 +158,6 @@ function ProfileDropdown({ user, onLogout }) {
 
             {isOpen && (
                 <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 py-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                    {/* User Info Header */}
                     <div className="px-4 pb-4 border-b border-slate-100">
                         <div className="flex items-center gap-3">
                             <div className="w-14 h-14 rounded-2xl overflow-hidden bg-emerald-100">
@@ -172,8 +179,6 @@ function ProfileDropdown({ user, onLogout }) {
                             </div>
                         </div>
                     </div>
-
-                    {/* Profile Details */}
                     <div className="px-4 py-3 space-y-2">
                         {user?.phoneNumber && (
                             <div className="flex items-center gap-3 text-sm text-slate-600">
@@ -192,8 +197,6 @@ function ProfileDropdown({ user, onLogout }) {
                             <span className="truncate">{user?.email}</span>
                         </div>
                     </div>
-
-                    {/* Actions */}
                     <div className="px-2 pt-3 border-t border-slate-100 space-y-1">
                         <button
                             onClick={() => {
@@ -225,26 +228,26 @@ function ProfileDropdown({ user, onLogout }) {
 export default function Layout({ children }) {
     const location = useLocation();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')) || { fullName: 'Guest', email: '' });
 
-    // Listen for storage changes to sync profile updates
     useEffect(() => {
         const handleStorageChange = () => {
             const updatedUser = JSON.parse(localStorage.getItem('user')) || { fullName: 'Guest', email: '' };
             setUser(updatedUser);
         };
-
         window.addEventListener('storage', handleStorageChange);
         return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
 
-    // Get active settings tab from URL hash or default to profile
     const [activeSettingsTab, setActiveSettingsTab] = useState(() => {
         const hash = location.hash.replace('#', '');
         return settingsTabs.find(t => t.id === hash)?.id || 'profile';
     });
 
     const isSettingsPage = location.pathname === '/settings';
+    const isTransactions = location.pathname === '/transactions';
+    const activeTab = searchParams.get('tab') || 'transactions';
 
     const handleLogout = () => {
         localStorage.removeItem('user');
@@ -257,9 +260,12 @@ export default function Layout({ children }) {
         navigate(`/settings#${tabId}`);
     };
 
+    const handleTransactionTabClick = (tabId) => {
+        setSearchParams({ tab: tabId });
+    };
+
     return (
         <div className="flex min-h-screen bg-[#F8FAFC]">
-            {/* Sidebar */}
             <aside className="w-64 bg-white border-r border-slate-200 flex flex-col sticky top-0 h-screen">
                 <div className="p-6 flex items-center gap-3">
                     <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
@@ -272,10 +278,16 @@ export default function Layout({ children }) {
                     {sidebarItems.map((item) => {
                         const isActive = location.pathname === item.path;
                         const isSettings = item.path === '/settings';
+                        const isTransactionsItem = item.path === '/transactions';
                         return (
                             <Link
                                 key={item.path}
                                 to={item.path}
+                                onClick={() => {
+                                    if (item.path === '/transactions') {
+                                        setSearchParams({ tab: 'transactions' });
+                                    }
+                                }}
                                 className={cn(
                                     "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
                                     isActive
@@ -288,9 +300,9 @@ export default function Layout({ children }) {
                                     isActive ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600"
                                 )} />
                                 <span className="flex-1">{item.label}</span>
-                                {isSettings && isSettingsPage && (
+                                {(isSettings && isSettingsPage) || (isTransactionsItem && isTransactions) ? (
                                     <ChevronRight size={16} className="text-emerald-600" />
-                                )}
+                                ) : null}
                             </Link>
                         );
                     })}
@@ -307,7 +319,6 @@ export default function Layout({ children }) {
                 </div>
             </aside>
 
-            {/* Settings Submenu Sidebar */}
             {isSettingsPage && (
                 <aside className="w-56 bg-[#F1F5F9] border-r border-slate-200 flex flex-col sticky top-0 h-screen animate-in slide-in-from-left duration-300">
                     <div className="p-5 border-b border-slate-200/60">
@@ -340,18 +351,45 @@ export default function Layout({ children }) {
                 </aside>
             )}
 
-            {/* Main Content */}
+            {isTransactions && (
+                <aside className="w-56 bg-[#F1F5F9] border-r border-slate-200 flex flex-col sticky top-0 h-screen animate-in slide-in-from-left duration-300">
+                    <div className="p-5 border-b border-slate-200/60">
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Manage</p>
+                    </div>
+                    <nav className="flex-1 p-3 space-y-1">
+                        {transactionTabs.map((tab) => {
+                            const isActive = activeTab === tab.id;
+                            const Icon = tab.icon;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => handleTransactionTabClick(tab.id)}
+                                    className={cn(
+                                        "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left",
+                                        isActive
+                                            ? "bg-white text-emerald-700 font-semibold shadow-sm border border-slate-200"
+                                            : "text-slate-500 hover:bg-white/60 hover:text-slate-700"
+                                    )}
+                                >
+                                    <Icon size={18} className={cn(
+                                        "transition-colors",
+                                        isActive ? "text-emerald-600" : "text-slate-400"
+                                    )} />
+                                    {tab.label}
+                                </button>
+                            );
+                        })}
+                    </nav>
+                </aside>
+            )}
+
             <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Header */}
                 <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 flex items-center justify-between sticky top-0 z-10">
-                    {/* Page Title */}
                     <div className="flex items-center">
                         <PageTitle pathname={location.pathname} hash={location.hash} />
                     </div>
 
-                    {/* Right Side: Search, Notification, Profile */}
                     <div className="flex items-center gap-4">
-                        {/* Search Bar */}
                         <div className="flex items-center gap-3 bg-slate-100 px-4 py-2.5 rounded-2xl w-72 group focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
                             <Search size={18} className="text-slate-400 group-focus-within:text-emerald-500" />
                             <input
@@ -363,7 +401,6 @@ export default function Layout({ children }) {
 
                         <div className="h-8 w-px bg-slate-200"></div>
 
-                        {/* Notification */}
                         <button className="relative p-2.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all">
                             <Bell size={20} />
                             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
@@ -375,7 +412,6 @@ export default function Layout({ children }) {
                     </div>
                 </header>
 
-                {/* Page Content */}
                 <main className="flex-1 overflow-y-auto p-8">
                     {children}
                 </main>

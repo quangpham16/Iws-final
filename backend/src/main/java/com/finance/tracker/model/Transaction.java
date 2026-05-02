@@ -9,6 +9,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "transactions")
@@ -46,6 +47,9 @@ public class Transaction {
     @NotNull(message = "Date is required")
     @Column(name = "transaction_date", nullable = false)
     private LocalDate date;
+
+    @Column(name = "transaction_time")
+    private LocalTime time;
 
     @Column(length = 500)
     private String note;
