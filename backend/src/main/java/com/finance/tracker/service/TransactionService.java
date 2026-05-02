@@ -1,6 +1,7 @@
 package com.finance.tracker.service;
 
 import com.finance.tracker.dto.TransactionDTO;
+import com.finance.tracker.exception.ResourceNotFoundException;
 import com.finance.tracker.mapper.TransactionMapper;
 import com.finance.tracker.model.Transaction;
 import com.finance.tracker.model.Transaction.TransactionType;
@@ -40,7 +41,7 @@ public class TransactionService {
     public TransactionDTO findById(Long id) {
         return transactionRepository.findById(id)
                 .map(transactionMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("Transaction not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction", id));
     }
 
     @Transactional(readOnly = true)
@@ -95,7 +96,7 @@ public class TransactionService {
         // Adjust wallet balance
         if (saved.getWalletId() != null) {
             Wallet wallet = walletRepository.findById(saved.getWalletId())
-                    .orElseThrow(() -> new RuntimeException("Wallet not found with id: " + saved.getWalletId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Wallet", saved.getWalletId()));
             if (saved.getType() == TransactionType.INCOME) {
                 wallet.setBalance(wallet.getBalance().add(saved.getAmount()));
             } else {
@@ -109,7 +110,7 @@ public class TransactionService {
 
     public TransactionDTO update(Long id, TransactionDTO updatedDto) {
         Transaction existing = transactionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transaction not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction", id));
         
         // Reverse old wallet balance
         if (existing.getWalletId() != null) {
@@ -130,15 +131,20 @@ public class TransactionService {
         existing.setType(updatedDto.getType());
         existing.setCategory(updatedDto.getCategory());
         existing.setDate(updatedDto.getDate());
+        existing.setTime(updatedDto.getTime());
         existing.setNote(updatedDto.getNote());
         existing.setWalletId(updatedDto.getWalletId());
+        if (updatedDto.getStatus() != null) {
+            existing.setStatus(updatedDto.getStatus());
+        }
+        existing.setUpdatedAt(java.time.LocalDateTime.now());
         
         Transaction saved = transactionRepository.save(existing);
 
         // Apply new wallet balance
         if (saved.getWalletId() != null) {
             Wallet newWallet = walletRepository.findById(saved.getWalletId())
-                    .orElseThrow(() -> new RuntimeException("Wallet not found with id: " + saved.getWalletId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Wallet", saved.getWalletId()));
             if (saved.getType() == TransactionType.INCOME) {
                 newWallet.setBalance(newWallet.getBalance().add(saved.getAmount()));
             } else {
@@ -152,7 +158,7 @@ public class TransactionService {
 
     public void delete(Long id) {
         Transaction existing = transactionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transaction not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction", id));
 
         // Reverse wallet balance before deleting
         if (existing.getWalletId() != null) {

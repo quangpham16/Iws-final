@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Plus, Search, ChevronDown, ChevronLeft, ChevronRight,
-    ArrowUpDown, ArrowUp, ArrowDown, X
+    ArrowUpDown, ArrowUp, ArrowDown, X, Edit2
 } from 'lucide-react';
 import { transactionApi } from '../services/transactionService';
 import { walletApi } from '../services/walletService';
@@ -41,6 +41,7 @@ export default function TransactionsPanel() {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showAdd, setShowAdd] = useState(false);
+    const [editingTransaction, setEditingTransaction] = useState(null);
 
     const [filterCategory, setFilterCategory] = useState('ALL');
     const [filterType, setFilterType] = useState('ALL');
@@ -56,7 +57,7 @@ export default function TransactionsPanel() {
 
     const [form, setForm] = useState({
         title: '', amount: '', type: 'EXPENSE', category: '', walletId: '',
-        date: new Date().toISOString().split('T')[0], note: ''
+        date: new Date().toISOString().split('T')[0], time: '', note: '', status: 'cleared'
     });
 
     useEffect(() => { fetchData(); }, []);
@@ -71,12 +72,36 @@ export default function TransactionsPanel() {
         finally { setLoading(false); }
     };
 
-    const handleAdd = async (e) => {
+    const handleOpenForm = (transaction = null) => {
+        if (transaction) {
+            setEditingTransaction(transaction);
+            setForm({
+                title: transaction.title || '', amount: transaction.amount || '', type: transaction.type || 'EXPENSE',
+                category: transaction.category || '', walletId: transaction.walletId || '',
+                date: transaction.date || new Date().toISOString().split('T')[0],
+                time: transaction.time || '', note: transaction.note || '',
+                status: transaction.status || 'cleared'
+            });
+        } else {
+            setEditingTransaction(null);
+            setForm({ title: '', amount: '', type: 'EXPENSE', category: '', walletId: '',
+                date: new Date().toISOString().split('T')[0], time: '', note: '', status: 'cleared' });
+        }
+        setShowAdd(true);
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await transactionApi.create(form);
+            if (editingTransaction) {
+                await transactionApi.update(editingTransaction.id, form);
+            } else {
+                await transactionApi.create(form);
+            }
             setShowAdd(false);
-            setForm({ title: '', amount: '', type: 'EXPENSE', category: '', walletId: '', date: new Date().toISOString().split('T')[0], note: '' });
+            setEditingTransaction(null);
+            setForm({ title: '', amount: '', type: 'EXPENSE', category: '', walletId: '',
+                date: new Date().toISOString().split('T')[0], time: '', note: '', status: 'cleared' });
             fetchData();
         } catch (err) { console.error(err); }
     };
@@ -201,25 +226,28 @@ export default function TransactionsPanel() {
                         <thead>
                             <tr className="border-b border-gray-100">
                                 <SortHeader label="Date" field="date" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
+                                <SortHeader label="Time" field="time" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
                                 <SortHeader label="Type" field="type" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
                                 <SortHeader label="Name" field="title" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
                                 <SortHeader label="Category" field="category" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
-                                <SortHeader label="Value" field="status" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
+                                <SortHeader label="Status" field="status" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
                                 <SortHeader label="Amount" field="amount" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
-                                <th className="px-6 py-5 w-12" />
+                                <th className="px-6 py-5 w-20" />
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             {paginated.length === 0 ? (
-                                <tr><td colSpan={7} className="px-6 py-20 text-center text-gray-400 font-bold">No transactions found</td></tr>
+                                <tr><td colSpan={8} className="px-6 py-20 text-center text-gray-400 font-bold">No transactions found</td></tr>
                             ) : paginated.map(t => {
                                 const status = t.status || 'cleared';
                                 const statusCfg = STATUS_STYLES[status] || STATUS_STYLES.cleared;
                                 const isIncome = t.type === 'INCOME';
                                 const dateStr = t.date ? new Date(t.date + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+                                const timeStr = t.time ? t.time.substring(0, 5) : '—';
                                 return (
                                     <tr key={t.id} className="hover:bg-gray-50/60 transition-colors group">
                                         <td className="px-6 py-5 text-sm font-bold text-gray-500 whitespace-nowrap">{dateStr}</td>
+                                        <td className="px-6 py-5 text-sm font-bold text-gray-400 whitespace-nowrap">{timeStr}</td>
                                         <td className="px-6 py-5 text-sm font-semibold text-gray-700">{TYPE_LABEL[t.type] || t.type}</td>
                                         <td className="px-6 py-5">
                                             <div>
@@ -241,10 +269,16 @@ export default function TransactionsPanel() {
                                             </span>
                                         </td>
                                         <td className="px-4 py-5 text-right">
-                                            <button onClick={() => handleDelete(t.id)}
-                                                className="p-2 rounded-xl text-gray-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100">
-                                                <X size={16} />
-                                            </button>
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                <button onClick={() => handleOpenForm(t)}
+                                                    className="p-2 rounded-xl text-gray-300 hover:text-[#106E4E] hover:bg-emerald-50 transition-all">
+                                                    <Edit2 size={15} />
+                                                </button>
+                                                <button onClick={() => handleDelete(t.id)}
+                                                    className="p-2 rounded-xl text-gray-300 hover:text-rose-500 hover:bg-rose-50 transition-all">
+                                                    <X size={16} />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -296,17 +330,17 @@ export default function TransactionsPanel() {
                 </div>
             </div>
 
-            {/* Add Modal */}
+            {/* Add/Edit Modal */}
             {showAdd && (
                 <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md z-50 flex items-center justify-center p-6 animate-in fade-in duration-300">
                     <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl animate-in slide-in-from-bottom-8 duration-500 overflow-hidden max-h-[90vh] overflow-y-auto">
                         <div className="p-8 border-b border-gray-50 flex items-center justify-between">
-                            <h3 className="text-2xl font-black text-gray-900 tracking-tight">Record Activity</h3>
-                            <button onClick={() => setShowAdd(false)} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-2xl transition-all">
+                            <h3 className="text-2xl font-black text-gray-900 tracking-tight">{editingTransaction ? 'Edit Transaction' : 'Record Activity'}</h3>
+                            <button onClick={() => { setShowAdd(false); setEditingTransaction(null); }} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-2xl transition-all">
                                 <X size={20} />
                             </button>
                         </div>
-                        <form onSubmit={handleAdd} className="p-8">
+                        <form onSubmit={handleSubmit} className="p-8">
                             <div className="flex bg-gray-50 p-2 rounded-[1.5rem] mb-8">
                                 {['EXPENSE', 'INCOME'].map(t => (
                                     <button key={t} type="button" onClick={() => setForm(f => ({ ...f, type: t }))}
@@ -330,8 +364,22 @@ export default function TransactionsPanel() {
                                         placeholder="0.00" />
                                 </div>
                                 <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status</label>
+                                    <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
+                                        className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all appearance-none">
+                                        <option value="cleared">Processed</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="reconciled">Reconciled</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Date</label>
                                     <input type="date" required value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                                        className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Time</label>
+                                    <input type="time" value={form.time} onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
                                         className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all" />
                                 </div>
                                 <div className="space-y-2">
@@ -359,7 +407,7 @@ export default function TransactionsPanel() {
                             </div>
                             <button type="submit"
                                 className="w-full py-5 mt-8 bg-[#106E4E] text-white font-black rounded-2xl hover:bg-[#0d593f] shadow-xl shadow-[#106E4E]/20 transition-all">
-                                Commit to Ledger
+                                {editingTransaction ? 'Save Changes' : 'Commit to Ledger'}
                             </button>
                         </form>
                     </div>
@@ -367,7 +415,7 @@ export default function TransactionsPanel() {
             )}
 
             {/* Floating Add button */}
-            <button onClick={() => setShowAdd(true)}
+            <button onClick={() => handleOpenForm()}
                 className="fixed bottom-8 right-8 bg-gray-900 text-white p-5 rounded-full font-black text-sm hover:bg-[#106E4E] transition-all flex items-center gap-2 shadow-2xl shadow-gray-900/20 z-40">
                 <Plus size={22} />
             </button>

@@ -35,6 +35,19 @@ public class Subscription {
     @Column(name = "next_due_date")
     private LocalDate nextDueDate;
 
+    @Column(name = "trial_end_date")
+    private LocalDate trialEndDate;
+
+    @Column(length = 100)
+    private String category;
+
+    @Builder.Default
+    @Column(name = "reminder_days")
+    private Integer reminderDays = 3;
+
+    @Column(length = 500)
+    private String note;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     private SubscriptionStatus status = SubscriptionStatus.active;

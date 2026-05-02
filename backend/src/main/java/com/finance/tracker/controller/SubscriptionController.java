@@ -25,6 +25,14 @@ public class SubscriptionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(subscriptionService.createSubscription(userId, subDTO));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<SubscriptionDTO> update(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id,
+            @RequestBody SubscriptionDTO dto) {
+        return ResponseEntity.ok(subscriptionService.updateSubscription(userId, id, dto));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@RequestHeader("X-User-Id") @NonNull Long userId, @PathVariable @NonNull Long id) {
         subscriptionService.deleteSubscription(userId, id);

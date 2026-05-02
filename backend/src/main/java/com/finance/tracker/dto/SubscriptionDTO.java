@@ -13,6 +13,10 @@ public class SubscriptionDTO {
     private String currencyCode;
     private String frequency;
     private LocalDate nextDueDate;
+    private LocalDate trialEndDate;
+    private String category;
+    private Integer reminderDays;
+    private String note;
     private String status;
     private LocalDateTime createdAt;
 }

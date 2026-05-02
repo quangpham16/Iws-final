@@ -16,8 +16,12 @@ public class TransactionMapper {
                 .type(entity.getType())
                 .category(entity.getCategory())
                 .date(entity.getDate())
+                .time(entity.getTime())
                 .note(entity.getNote())
                 .walletId(entity.getWalletId())
+                .status(entity.getStatus())
+                .source(entity.getSource())
+                .createdAt(entity.getCreatedAt())
                 .build();
     }
 
@@ -30,8 +34,10 @@ public class TransactionMapper {
                 .type(dto.getType())
                 .category(dto.getCategory())
                 .date(dto.getDate())
+                .time(dto.getTime())
                 .note(dto.getNote())
                 .walletId(dto.getWalletId())
+                .status(dto.getStatus() != null ? dto.getStatus() : Transaction.TransactionStatus.cleared)
                 .build();
     }
 }
