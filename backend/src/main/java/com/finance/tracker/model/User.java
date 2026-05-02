@@ -53,6 +53,39 @@ public class User {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
+    // Profile fields
+    @Column(name = "avatar_url", columnDefinition = "LONGTEXT")
+    private String avatarUrl;
+
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
+    @Column(name = "phone_country_code")
+    private String phoneCountryCode = "VN";
+
+    @Column(name = "gender")
+    private String gender;
+
+    @Column(name = "id_number")
+    private String idNumber;
+
+    @Column(name = "tax_id_number")
+    private String taxIdNumber;
+
+    @Column(name = "tax_country_code")
+    private String taxCountryCode;
+
+    @Column(name = "residential_address")
+    private String residentialAddress;
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public enum UserStatus {
         active, inactive, suspended
     }

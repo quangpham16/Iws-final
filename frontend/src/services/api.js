@@ -7,6 +7,7 @@ import { goalApi } from './goalService';
 import { subscriptionApi } from './subscriptionService';
 import { payeeApi } from './payeeService';
 import { tagApi } from './tagService';
+import { userApi } from './userService';
 
 export const authApi = {
     login: (data) => apiClient.post('/auth/login', data),
@@ -21,7 +22,8 @@ export {
     goalApi, 
     subscriptionApi, 
     payeeApi, 
-    tagApi 
+    tagApi,
+    userApi 
 };
 
 export default apiClient;
