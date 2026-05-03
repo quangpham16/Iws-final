@@ -49,7 +49,7 @@ export default function TransactionsPanel() {
 
     const [form, setForm] = useState({
         amount: '', categoryId: '', walletId: '',
-        date: new Date().toISOString().split('T')[0], time: '', note: '', tagIds: []
+        date: new Date().toISOString().split('T')[0], note: '', tagIds: []
     });
 
     useEffect(() => { fetchData(); }, []);
@@ -71,13 +71,13 @@ export default function TransactionsPanel() {
                 amount: transaction.amount || '',
                 categoryId: transaction.categoryId || '', walletId: transaction.walletId || '',
                 date: transaction.date || new Date().toISOString().split('T')[0],
-                time: transaction.time || '', note: transaction.note || '',
+                note: transaction.note || '',
                 tagIds: transaction.tagIds || []
             });
         } else {
             setEditingTransaction(null);
             setForm({ amount: '', categoryId: '', walletId: '',
-                date: new Date().toISOString().split('T')[0], time: '', note: '', tagIds: [] });
+                date: new Date().toISOString().split('T')[0], note: '', tagIds: [] });
         }
         setShowAdd(true);
     };
@@ -93,7 +93,7 @@ export default function TransactionsPanel() {
             setShowAdd(false);
             setEditingTransaction(null);
             setForm({ amount: '', categoryId: '', walletId: '',
-                date: new Date().toISOString().split('T')[0], time: '', note: '', tagIds: [] });
+                date: new Date().toISOString().split('T')[0], note: '', tagIds: [] });
             fetchData();
         } catch (err) { console.error(err); }
     };
@@ -220,7 +220,6 @@ export default function TransactionsPanel() {
                         <thead>
                             <tr className="bg-[#106E4E]/5 border-b border-[#106E4E]/10">
                                 <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Date</th>
-                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Time</th>
                                 <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Note</th>
                                 <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Category</th>
                                 <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Tags</th>
@@ -234,14 +233,12 @@ export default function TransactionsPanel() {
                                 <tr><td colSpan={8} className="px-6 py-20 text-center text-gray-400 font-bold">No transactions found</td></tr>
                             ) : paginated.map(t => {
                                 const dateStr = t.date ? new Date(t.date + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
-                                const timeStr = t.time ? t.time.substring(0, 5) : '—';
                                 const txnTags = tags.filter(tag => t.tagIds?.includes(tag.id));
                                 const wallet = wallets.find(w => w.id === t.walletId);
                                 const category = categories.find(c => c.id === t.categoryId);
                                 return (
                                     <tr key={t.id} className="hover:bg-gray-50/60 transition-colors group">
                                         <td className="px-6 py-5 text-sm font-bold text-gray-500 whitespace-nowrap">{dateStr}</td>
-                                        <td className="px-6 py-5 text-sm font-bold text-gray-400 whitespace-nowrap">{timeStr}</td>
                                         <td className="px-6 py-5">
                                             <div>
                                                 {t.note && <p className="text-sm font-bold text-gray-900 line-clamp-2">{t.note}</p>}
@@ -377,11 +374,6 @@ export default function TransactionsPanel() {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Date</label>
                                     <input type="date" required value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                                        className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Time</label>
-                                    <input type="time" value={form.time} onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
                                         className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all" />
                                 </div>
                                 <div className="space-y-2">

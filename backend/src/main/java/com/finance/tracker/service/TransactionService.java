@@ -76,18 +76,19 @@ public class TransactionService {
         entity.setCreatedAt(java.time.LocalDateTime.now());
         entity.setUpdatedAt(java.time.LocalDateTime.now());
         Transaction saved = transactionRepository.save(entity);
+        recalculateWalletBalance(saved.getWalletId());
         return transactionMapper.toDTO(saved);
     }
 
     public TransactionDTO update(Long id, TransactionDTO updatedDto) {
         Transaction existing = transactionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction", id));
+        Long oldWalletId = existing.getWalletId();
         
         existing.setAmount(updatedDto.getAmount());
         existing.setCurrencyCode(updatedDto.getCurrencyCode());
         existing.setCategoryId(updatedDto.getCategoryId());
         existing.setDate(updatedDto.getDate());
-        existing.setTime(updatedDto.getTime());
         existing.setNote(updatedDto.getNote());
         existing.setWalletId(updatedDto.getWalletId());
         existing.setPayeeId(updatedDto.getPayeeId());
@@ -98,12 +99,31 @@ public class TransactionService {
         existing.setUpdatedAt(java.time.LocalDateTime.now());
         
         Transaction saved = transactionRepository.save(existing);
+        recalculateWalletBalance(oldWalletId);
+        if (!Objects.equals(oldWalletId, updatedDto.getWalletId())) {
+            recalculateWalletBalance(updatedDto.getWalletId());
+        }
         return transactionMapper.toDTO(saved);
     }
 
     public void delete(Long id) {
         Transaction existing = transactionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction", id));
+        Long walletId = existing.getWalletId();
         transactionRepository.deleteById(id);
+        recalculateWalletBalance(walletId);
+    }
+
+    // ── Wallet balance recalculation ───────────────────────────────────────────
+
+    private void recalculateWalletBalance(Long walletId) {
+        if (walletId == null) return;
+        Wallet wallet = walletRepository.findById(walletId).orElse(null);
+        if (wallet == null) return;
+        BigDecimal initial = Objects.requireNonNullElse(wallet.getInitialBalance(), BigDecimal.ZERO);
+        BigDecimal txnSum = transactionRepository.sumByWalletId(walletId);
+        wallet.setCurrentBalance(initial.add(txnSum));
+        wallet.setUpdatedAt(java.time.LocalDateTime.now());
+        walletRepository.save(wallet);
     }
 }

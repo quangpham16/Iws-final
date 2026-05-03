@@ -33,4 +33,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     // Search by note (replacing title search)
     List<Transaction> findByNoteContainingIgnoreCase(String keyword);
+
+    // Sum of transactions for a specific wallet
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.walletId = :walletId")
+    java.math.BigDecimal sumByWalletId(@org.springframework.data.repository.query.Param("walletId") Long walletId);
 }
