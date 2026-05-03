@@ -26,10 +26,32 @@ public class TagService {
 
     @Transactional
     public TagDTO createTag(Long userId, TagDTO dto) {
+        if (dto.getColorHex() != null && !dto.getColorHex().isEmpty() && 
+            tagRepository.existsByUserIdAndColorHex(userId, dto.getColorHex())) {
+            throw new RuntimeException("Color already exists for another tag");
+        }
         Tag tag = tagMapper.toEntity(dto);
         tag.setUserId(userId);
         Tag saved = tagRepository.save(tag);
         return tagMapper.toDTO(saved);
+    }
+
+    @Transactional
+    public TagDTO updateTag(Long userId, Long id, TagDTO dto) {
+        Tag tag = tagRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tag not found"));
+        if (!tag.getUserId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+        if (dto.getColorHex() != null && !dto.getColorHex().isEmpty() && 
+            !dto.getColorHex().equals(tag.getColorHex()) &&
+            tagRepository.existsByUserIdAndColorHexAndIdNot(userId, dto.getColorHex(), id)) {
+            throw new RuntimeException("Color already exists for another tag");
+        }
+        tag.setName(dto.getName());
+        tag.setColorHex(dto.getColorHex());
+        Tag updated = tagRepository.save(tag);
+        return tagMapper.toDTO(updated);
     }
 
     @Transactional
