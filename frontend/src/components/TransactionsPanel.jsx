@@ -49,7 +49,7 @@ export default function TransactionsPanel() {
 
     const [form, setForm] = useState({
         amount: '', categoryId: '', walletId: '',
-        date: new Date().toISOString().split('T')[0], note: '', tagIds: []
+        date: new Date().toISOString().split('T')[0], note: '', tagIds: [], type: 'EXPENSE'
     });
 
     useEffect(() => { fetchData(); }, []);
@@ -68,16 +68,17 @@ export default function TransactionsPanel() {
         if (transaction) {
             setEditingTransaction(transaction);
             setForm({
-                amount: transaction.amount || '',
+                amount: transaction.amount ? Math.abs(transaction.amount) : '',
                 categoryId: transaction.categoryId || '', walletId: transaction.walletId || '',
                 date: transaction.date || new Date().toISOString().split('T')[0],
                 note: transaction.note || '',
-                tagIds: transaction.tagIds || []
+                tagIds: transaction.tagIds || [],
+                type: transaction.amount < 0 ? 'EXPENSE' : 'INCOME'
             });
         } else {
             setEditingTransaction(null);
             setForm({ amount: '', categoryId: '', walletId: '',
-                date: new Date().toISOString().split('T')[0], note: '', tagIds: [] });
+                date: new Date().toISOString().split('T')[0], note: '', tagIds: [], type: 'EXPENSE' });
         }
         setShowAdd(true);
     };
@@ -85,15 +86,23 @@ export default function TransactionsPanel() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const payload = {
+                ...form,
+                categoryId: form.categoryId ? Number(form.categoryId) : null,
+                walletId: form.walletId ? Number(form.walletId) : null,
+                amount: form.type === 'EXPENSE' ? -Math.abs(Number(form.amount)) : Math.abs(Number(form.amount))
+            };
+            delete payload.type;
+
             if (editingTransaction) {
-                await transactionApi.update(editingTransaction.id, form);
+                await transactionApi.update(editingTransaction.id, payload);
             } else {
-                await transactionApi.create(form);
+                await transactionApi.create(payload);
             }
             setShowAdd(false);
             setEditingTransaction(null);
             setForm({ amount: '', categoryId: '', walletId: '',
-                date: new Date().toISOString().split('T')[0], note: '', tagIds: [] });
+                date: new Date().toISOString().split('T')[0], note: '', tagIds: [], type: 'EXPENSE' });
             fetchData();
         } catch (err) { console.error(err); }
     };
@@ -347,7 +356,7 @@ export default function TransactionsPanel() {
 
             {/* Add/Edit Modal */}
             {showAdd && (
-                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md z-50 flex items-center justify-center p-6 animate-in fade-in duration-300">
+                <div className="fixed inset-0 bg-gray-900/40 z-50 flex items-center justify-center p-6 animate-in fade-in duration-300">
                     <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl animate-in slide-in-from-bottom-8 duration-500 overflow-hidden max-h-[90vh] overflow-y-auto">
                         <div className="p-8 border-b border-gray-50 flex items-center justify-between">
                             <h3 className="text-2xl font-black text-gray-900 tracking-tight">{editingTransaction ? 'Edit Transaction' : 'Record Activity'}</h3>
@@ -356,12 +365,22 @@ export default function TransactionsPanel() {
                             </button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-8">
+                            <div className="flex bg-gray-50 p-1.5 rounded-2xl mb-6">
+                                <button type="button" onClick={() => setForm(f => ({ ...f, type: 'EXPENSE' }))}
+                                    className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${form.type === 'EXPENSE' ? 'bg-white text-rose-500 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
+                                    Expense
+                                </button>
+                                <button type="button" onClick={() => setForm(f => ({ ...f, type: 'INCOME' }))}
+                                    className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${form.type === 'INCOME' ? 'bg-white text-emerald-500 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
+                                    Income
+                                </button>
+                            </div>
                             <div className="grid grid-cols-2 gap-5">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Amount ($)</label>
                                     <input type="number" required value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
                                         className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 tabular-nums focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all placeholder:text-gray-300"
-                                        placeholder="0.00" />
+                                        placeholder="0.00" min="0" step="0.01" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Category</label>

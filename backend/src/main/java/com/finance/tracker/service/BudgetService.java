@@ -25,7 +25,12 @@ public class BudgetService {
         List<Budget> budgets = budgetRepository.findByUserId(userId);
         return budgets.stream()
                 .map(budget -> {
-                    BigDecimal spent = transactionRepository.sumByDateRange(userId, budget.getStartDate(), budget.getEndDate());
+                    BigDecimal spent;
+                    if (budget.getCategoryId() != null) {
+                        spent = transactionRepository.sumExpensesByDateRangeAndCategoryId(userId, budget.getStartDate(), budget.getEndDate(), budget.getCategoryId());
+                    } else {
+                        spent = transactionRepository.sumExpensesByDateRange(userId, budget.getStartDate(), budget.getEndDate());
+                    }
                     return budgetMapper.toDTO(budget, spent);
                 })
                 .collect(Collectors.toList());
@@ -47,5 +52,32 @@ public class BudgetService {
                 budgetRepository.delete(b);
             }
         });
+    }
+
+    @Transactional
+    public BudgetDTO updateBudget(Long userId, Long id, BudgetDTO dto) {
+        Budget existing = budgetRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Budget not found"));
+        if (!existing.getUserId().equals(userId)) {
+            throw new RuntimeException("Not authorized");
+        }
+        // update fields
+        existing.setName(dto.getName());
+        existing.setPeriodType(dto.getPeriodType() != null ? dto.getPeriodType() : existing.getPeriodType());
+        existing.setStartDate(dto.getStartDate() != null ? dto.getStartDate() : existing.getStartDate());
+        existing.setEndDate(dto.getEndDate() != null ? dto.getEndDate() : existing.getEndDate());
+        existing.setAmount(dto.getAmount() != null ? dto.getAmount() : existing.getAmount());
+        existing.setCategoryId(dto.getCategoryId());
+
+        Budget saved = budgetRepository.save(existing);
+
+        // recalc spent
+        java.math.BigDecimal spent;
+        if (saved.getCategoryId() != null) {
+            spent = transactionRepository.sumExpensesByDateRangeAndCategoryId(userId, saved.getStartDate(), saved.getEndDate(), saved.getCategoryId());
+        } else {
+            spent = transactionRepository.sumExpensesByDateRange(userId, saved.getStartDate(), saved.getEndDate());
+        }
+        return budgetMapper.toDTO(saved, spent != null ? spent : java.math.BigDecimal.ZERO);
     }
 }

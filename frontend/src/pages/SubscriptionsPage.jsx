@@ -151,7 +151,7 @@ export default function SubscriptionsPage() {
             )}
 
             {showAdd && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-md animate-in fade-in duration-300">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 animate-in fade-in duration-300">
                     <div className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
                         <div className="p-8 border-b border-gray-50 flex items-center justify-between">
                             <h3 className="text-2xl font-black text-gray-900 tracking-tight">Add Subscription</h3>

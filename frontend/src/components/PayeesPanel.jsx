@@ -103,7 +103,7 @@ export default function PayeesPanel() {
             </div>
 
             {showAdd && (
-                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+                <div className="fixed inset-0 bg-gray-900/40 z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
                     <div className="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-300">
                         <h2 className="text-2xl font-black text-gray-900 mb-8">Add Contact</h2>
                         <form onSubmit={handleAdd} className="space-y-6">

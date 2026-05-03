@@ -21,6 +21,7 @@ public class BudgetDTO {
     private LocalDate startDate;
     private LocalDate endDate;
     private BigDecimal amount;
+    private Long categoryId;
     private BigDecimal spentAmount;
     private LocalDateTime createdAt;
 }

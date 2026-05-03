@@ -37,4 +37,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     // Sum of transactions for a specific wallet
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.walletId = :walletId")
     java.math.BigDecimal sumByWalletId(@org.springframework.data.repository.query.Param("walletId") Long walletId);
+
+    // Sum expenses by date range and category
+    @Query("SELECT COALESCE(SUM(-t.amount), 0) FROM Transaction t WHERE t.userId = :userId AND t.date BETWEEN :startDate AND :endDate AND t.categoryId = :categoryId AND t.amount < 0")
+    java.math.BigDecimal sumExpensesByDateRangeAndCategoryId(@org.springframework.data.repository.query.Param("userId") Long userId, @org.springframework.data.repository.query.Param("startDate") LocalDate startDate, @org.springframework.data.repository.query.Param("endDate") LocalDate endDate, @org.springframework.data.repository.query.Param("categoryId") Long categoryId);
+
+    // Sum all expenses by date range
+    @Query("SELECT COALESCE(SUM(-t.amount), 0) FROM Transaction t WHERE t.userId = :userId AND t.date BETWEEN :startDate AND :endDate AND t.amount < 0")
+    java.math.BigDecimal sumExpensesByDateRange(@org.springframework.data.repository.query.Param("userId") Long userId, @org.springframework.data.repository.query.Param("startDate") LocalDate startDate, @org.springframework.data.repository.query.Param("endDate") LocalDate endDate);
 }

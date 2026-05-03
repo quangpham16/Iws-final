@@ -17,6 +17,7 @@ public class BudgetMapper {
                 .startDate(budget.getStartDate())
                 .endDate(budget.getEndDate())
                 .amount(budget.getAmount())
+                .categoryId(budget.getCategoryId())
                 .spentAmount(spentAmount != null ? spentAmount : BigDecimal.ZERO)
                 .createdAt(budget.getCreatedAt())
                 .build();
@@ -31,6 +32,7 @@ public class BudgetMapper {
                 .startDate(dto.getStartDate())
                 .endDate(dto.getEndDate())
                 .amount(dto.getAmount())
+                .categoryId(dto.getCategoryId())
                 .build();
     }
 }
