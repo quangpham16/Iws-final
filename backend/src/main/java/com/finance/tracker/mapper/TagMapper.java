@@ -8,18 +8,30 @@ import org.springframework.stereotype.Component;
 public class TagMapper {
     public TagDTO toDTO(Tag tag) {
         if (tag == null) return null;
-        TagDTO dto = new TagDTO();
-        dto.setId(tag.getId());
-        dto.setName(tag.getName());
-        dto.setColorHex(tag.getColorHex());
-        return dto;
+        return TagDTO.builder()
+                .id(tag.getId())
+                .userId(tag.getUserId())
+                .first(tag.getFirst())
+                .last(tag.getLast())
+                .name(tag.getName())
+                .colorHex(tag.getColorHex())
+                .isSystem(tag.getIsSystem())
+                .usageCount(tag.getUsageCount())
+                .createdAt(tag.getCreatedAt())
+                .updatedAt(tag.getUpdatedAt())
+                .build();
     }
 
     public Tag toEntity(TagDTO dto) {
         if (dto == null) return null;
-        Tag tag = new Tag();
-        tag.setName(dto.getName());
-        tag.setColorHex(dto.getColorHex());
-        return tag;
+        return Tag.builder()
+                .userId(dto.getUserId())
+                .first(dto.getFirst())
+                .last(dto.getLast())
+                .name(dto.getName())
+                .colorHex(dto.getColorHex())
+                .isSystem(dto.getIsSystem() != null ? dto.getIsSystem() : false)
+                .usageCount(dto.getUsageCount() != null ? dto.getUsageCount() : 0L)
+                .build();
     }
 }

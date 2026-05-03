@@ -32,6 +32,8 @@ public class TagService {
         }
         Tag tag = tagMapper.toEntity(dto);
         tag.setUserId(userId);
+        tag.setCreatedAt(java.time.LocalDateTime.now());
+        tag.setUpdatedAt(java.time.LocalDateTime.now());
         Tag saved = tagRepository.save(tag);
         return tagMapper.toDTO(saved);
     }
@@ -50,6 +52,7 @@ public class TagService {
         }
         tag.setName(dto.getName());
         tag.setColorHex(dto.getColorHex());
+        tag.setUpdatedAt(java.time.LocalDateTime.now());
         Tag updated = tagRepository.save(tag);
         return tagMapper.toDTO(updated);
     }

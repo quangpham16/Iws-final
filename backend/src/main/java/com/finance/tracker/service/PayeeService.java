@@ -28,6 +28,7 @@ public class PayeeService {
     public PayeeDTO createPayee(Long userId, PayeeDTO dto) {
         Payee payee = payeeMapper.toEntity(dto);
         payee.setUserId(userId);
+        payee.setCreatedAt(java.time.LocalDateTime.now());
         Payee saved = payeeRepository.save(payee);
         return payeeMapper.toDTO(saved);
     }

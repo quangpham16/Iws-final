@@ -13,7 +13,13 @@ import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { transactionApi } from '../services/transactionService';
 import { walletApi } from '../services/walletService';
 
-const MetricCard = ({ title, value, subtext, icon: Icon, trend = 'neutral' }) => (
+const formatNumber = (num) => {
+  if (num === undefined || num === null || isNaN(num)) return '0';
+  const n = Number(num);
+  return n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+};
+
+const MetricCard = ({ title, value = 0, subtext, icon: Icon, trend = 'neutral' }) => (
   <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col justify-between h-full hover:shadow-md transition-all">
     <div className="flex justify-between items-start mb-8">
       <div className="p-3 rounded-2xl bg-gray-50 text-gray-400">
@@ -26,7 +32,7 @@ const MetricCard = ({ title, value, subtext, icon: Icon, trend = 'neutral' }) =>
     </div>
     <div>
       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{title}</p>
-      <h3 className="text-3xl font-black text-gray-900 tabular-nums">${value.toLocaleString()}</h3>
+      <h3 className="text-3xl font-black text-gray-900 tabular-nums">${formatNumber(value)}</h3>
       <p className="text-[10px] font-medium text-gray-400 mt-3 flex items-center gap-2">
         <span className="w-1 h-1 rounded-full bg-[#106E4E]"></span>
         {subtext}
@@ -36,7 +42,7 @@ const MetricCard = ({ title, value, subtext, icon: Icon, trend = 'neutral' }) =>
 );
 
 export default function DashboardPage() {
-    const [summary, setSummary] = useState({ totalIncome: 0, totalExpense: 0, balance: 0 });
+    const [summary, setSummary] = useState({ total: 0, count: 0, balance: 0, totalIncome: 0, totalExpense: 0 });
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -52,13 +58,21 @@ export default function DashboardPage() {
                 walletApi.getTotalBalance()
             ]);
             
+            const total = sumRes.data?.total ?? 0;
+            const count = sumRes.data?.count ?? 0;
+            const balance = walletTotalRes.data?.totalBalance ?? 0;
+            
             setSummary({
-                ...sumRes.data,
-                balance: walletTotalRes.data.totalBalance || 0
+                total: Number(total) || 0,
+                count: Number(count) || 0,
+                balance: Number(balance) || 0,
+                totalIncome: Number(total) || 0,
+                totalExpense: 0
             });
-            setTransactions(transRes.data);
+            setTransactions(Array.isArray(transRes.data) ? transRes.data : []);
         } catch (err) {
-            console.error(err);
+            console.error('Dashboard fetch error:', err);
+            setSummary({ total: 0, count: 0, balance: 0, totalIncome: 0, totalExpense: 0 });
         } finally {
             setLoading(false);
         }
@@ -119,7 +133,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Monthly Income</p>
-                <h3 className="text-3xl font-black text-gray-900 tabular-nums">${summary.totalIncome.toLocaleString()}</h3>
+                <h3 className="text-3xl font-black text-gray-900 tabular-nums">${formatNumber(summary.totalIncome)}</h3>
                 <div className="mt-4 flex items-end gap-1 h-8">
                     {[...Array(12)].map((_, i) => (
                     <div key={i} className={`flex-1 rounded-sm h-1 ${i < 6 ? 'bg-emerald-100' : 'bg-gray-50'}`} style={{height: i < 6 ? `${(i+1)*10}px` : '4px'}}></div>
@@ -139,9 +153,9 @@ export default function DashboardPage() {
                 </div>
                 <div>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Monthly Expenses</p>
-                <h3 className="text-3xl font-black text-gray-900 tabular-nums">${summary.totalExpense.toLocaleString()}</h3>
+                <h3 className="text-3xl font-black text-gray-900 tabular-nums">${formatNumber(summary.totalExpense)}</h3>
                 <div className="mt-6 h-1.5 w-full bg-gray-50 rounded-full overflow-hidden">
-                    <div className="h-full bg-rose-500 transition-all duration-1000" style={{width: summary.totalIncome > 0 ? `${(summary.totalExpense / summary.totalIncome) * 100}%` : '0%'}}></div>
+                    <div className="h-full bg-rose-500 transition-all duration-1000" style={{width: (summary.totalIncome || 0) > 0 ? `${Math.min(100, ((summary.totalExpense || 0) / (summary.totalIncome || 1)) * 100)}%` : '0%'}}></div>
                 </div>
                 </div>
             </div>
@@ -173,7 +187,7 @@ export default function DashboardPage() {
                 {/* Recharts Implementation instead of zero-state */}
                 <div className="h-72 w-full mt-4">
                     {chartData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height={280}>
                             <AreaChart data={chartData}>
                                 <defs>
                                     <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">

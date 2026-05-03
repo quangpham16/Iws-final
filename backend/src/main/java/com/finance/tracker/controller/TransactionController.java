@@ -1,7 +1,6 @@
 package com.finance.tracker.controller;
 
 import com.finance.tracker.dto.TransactionDTO;
-import com.finance.tracker.model.Transaction.TransactionType;
 import com.finance.tracker.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,16 +33,10 @@ public class TransactionController {
         return ResponseEntity.ok(transactionService.findById(id));
     }
 
-    // GET /api/transactions/type/{type}   e.g. INCOME | EXPENSE
-    @GetMapping("/type/{type}")
-    public ResponseEntity<List<TransactionDTO>> getByType(@PathVariable TransactionType type) {
-        return ResponseEntity.ok(transactionService.findByType(type));
-    }
-
-    // GET /api/transactions/category/{category}
-    @GetMapping("/category/{category}")
-    public ResponseEntity<List<TransactionDTO>> getByCategory(@PathVariable String category) {
-        return ResponseEntity.ok(transactionService.findByCategory(category));
+    // GET /api/transactions/category/{categoryId}
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<TransactionDTO>> getByCategoryId(@PathVariable Long categoryId) {
+        return ResponseEntity.ok(transactionService.findByCategoryId(categoryId));
     }
 
     // GET /api/transactions/range?from=2024-01-01&to=2024-12-31
@@ -54,11 +47,6 @@ public class TransactionController {
         return ResponseEntity.ok(transactionService.findByDateRange(from, to));
     }
 
-    // GET /api/transactions/search?keyword=groceries
-    @GetMapping("/search")
-    public ResponseEntity<List<TransactionDTO>> search(@RequestParam String keyword) {
-        return ResponseEntity.ok(transactionService.search(keyword));
-    }
 
     // GET /api/transactions/summary
     @GetMapping("/summary")

@@ -32,15 +32,14 @@ public class CategoryService {
         }
         Category category = categoryMapper.toEntity(dto);
         category.setUserId(userId);
+        category.setCreatedAt(java.time.LocalDateTime.now());
+        category.setUpdatedAt(java.time.LocalDateTime.now());
         Category saved = categoryRepository.save(category);
         return categoryMapper.toDTO(saved);
     }
 
     @Transactional
     public CategoryDTO updateCategory(Long userId, Long id, CategoryDTO dto) {
-        System.out.println("[DEBUG] updateCategory called - userId: " + userId + ", id: " + id);
-        System.out.println("[DEBUG] DTO: name=" + dto.getName() + ", type=" + dto.getType() + ", color=" + dto.getColorHex());
-        
         if (userId == null) {
             throw new RuntimeException("User ID is required");
         }
@@ -50,8 +49,6 @@ public class CategoryService {
         
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
-        
-        System.out.println("[DEBUG] Found category: " + category.getName() + ", owner: " + category.getUserId());
         
         if (!category.getUserId().equals(userId)) {
             throw new RuntimeException("Unauthorized: user " + userId + " cannot modify category " + id);
@@ -64,22 +61,16 @@ public class CategoryService {
         }
         
         category.setName(dto.getName());
-        
-        if (dto.getType() != null && !dto.getType().isEmpty()) {
-            try {
-                category.setType(Category.CategoryType.valueOf(dto.getType().toLowerCase()));
-                System.out.println("[DEBUG] Set type to: " + dto.getType().toLowerCase());
-            } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid category type: " + dto.getType() + ". Must be: expense, income, or transfer");
-            }
-        }
-        
+        category.setNameVn(dto.getNameVn());
+        category.setType(dto.getType());
+        category.setIcon(dto.getIcon());
         category.setColorHex(dto.getColorHex());
-        System.out.println("[DEBUG] Set color to: " + dto.getColorHex());
+        category.setParentCategoryId(dto.getParentCategoryId());
+        category.setIsActive(dto.getIsActive());
+        category.setSortOrder(dto.getSortOrder());
+        category.setUpdatedAt(java.time.LocalDateTime.now());
         
         Category updated = categoryRepository.save(category);
-        System.out.println("[DEBUG] Category saved successfully");
-        
         return categoryMapper.toDTO(updated);
     }
 

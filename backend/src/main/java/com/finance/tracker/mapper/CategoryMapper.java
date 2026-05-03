@@ -8,26 +8,35 @@ import org.springframework.stereotype.Component;
 public class CategoryMapper {
     public CategoryDTO toDTO(Category category) {
         if (category == null) return null;
-        CategoryDTO dto = new CategoryDTO();
-        dto.setId(category.getId());
-        dto.setName(category.getName());
-        dto.setType(category.getType() != null ? category.getType().name() : null);
-        dto.setIcon(category.getIcon());
-        dto.setColorHex(category.getColorHex());
-        dto.setIsSystem(category.getIsSystem());
-        dto.setCreatedAt(category.getCreatedAt());
-        return dto;
+        return CategoryDTO.builder()
+                .id(category.getId())
+                .userId(category.getUserId())
+                .parentCategoryId(category.getParentCategoryId())
+                .name(category.getName())
+                .nameVn(category.getNameVn())
+                .type(category.getType())
+                .icon(category.getIcon())
+                .colorHex(category.getColorHex())
+                .isActive(category.getIsActive())
+                .sortOrder(category.getSortOrder())
+                .createdAt(category.getCreatedAt())
+                .updatedAt(category.getUpdatedAt())
+                .build();
     }
 
     public Category toEntity(CategoryDTO dto) {
         if (dto == null) return null;
-        Category category = new Category();
-        category.setName(dto.getName());
-        if (dto.getType() != null) {
-            category.setType(Category.CategoryType.valueOf(dto.getType()));
-        }
-        category.setIcon(dto.getIcon());
-        category.setColorHex(dto.getColorHex());
-        return category;
+        return Category.builder()
+                .id(dto.getId())
+                .userId(dto.getUserId())
+                .parentCategoryId(dto.getParentCategoryId())
+                .name(dto.getName())
+                .nameVn(dto.getNameVn())
+                .type(dto.getType())
+                .icon(dto.getIcon())
+                .colorHex(dto.getColorHex())
+                .isActive(dto.getIsActive())
+                .sortOrder(dto.getSortOrder())
+                .build();
     }
 }
