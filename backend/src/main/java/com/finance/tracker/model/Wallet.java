@@ -45,6 +45,9 @@ public class Wallet {
     @Column(name = "institution_name", length = 100)
     private String institutionName;
 
+    @Column(name = "color_hex", length = 7)
+    private String colorHex;
+
     @Column(name = "is_active")
     private Boolean isActive = true;
 
