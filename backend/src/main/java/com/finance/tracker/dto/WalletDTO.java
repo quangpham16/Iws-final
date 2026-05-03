@@ -22,6 +22,7 @@ public class WalletDTO {
     private BigDecimal initialBalance;
     private BigDecimal currentBalance;
     private String institutionName;
+    private String colorHex;
     private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

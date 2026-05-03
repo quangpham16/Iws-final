@@ -502,8 +502,8 @@ export default function DashboardPage() {
                                         <Pie
                                             data={budgetSlices}
                                             dataKey="value"
-                                            innerRadius={50}
-                                            outerRadius={68}
+                                            innerRadius={60}
+                                            outerRadius={75}
                                             paddingAngle={2}
                                             strokeWidth={0}
                                         >
