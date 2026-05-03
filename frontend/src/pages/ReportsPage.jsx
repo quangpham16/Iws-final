@@ -36,7 +36,7 @@ export default function ReportsPage() {
                     <h1 className="text-3xl font-black text-slate-800 tracking-tight">Financial Reports</h1>
                     <p className="text-slate-500 font-medium">Analyze your long-term financial health</p>
                 </div>
-                <button className="flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-slate-800 transition-all shadow-lg active:scale-95">
+                <button className="flex items-center gap-2 bg-[#106E4E] text-white px-6 py-3 rounded-2xl font-bold hover:bg-[#0d5a3f] transition-all shadow-xl shadow-[#106E4E]/20 active:scale-95 hover:-translate-y-0.5">
                     <Download size={18} />
                     Export CSV
                 </button>
@@ -49,7 +49,7 @@ export default function ReportsPage() {
             ) : (
                 <div className="grid grid-cols-1 gap-6">
                     {monthlyData.map((data) => (
-                        <div key={data.month} className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row items-center gap-8">
+                        <div key={data.month} className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col md:flex-row items-center gap-8">
                             <div className="flex items-center gap-4 min-w-[200px]">
                                 <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
                                     <Calendar size={28} />

@@ -266,7 +266,7 @@ export default function Layout({ children }) {
 
     return (
         <div className="flex min-h-screen bg-[#F8FAFC]">
-            <aside className="w-64 bg-white border-r border-slate-200 flex flex-col sticky top-0 h-screen">
+            <aside className="w-64 bg-white/70 backdrop-blur-xl border-r border-slate-200/50 flex flex-col sticky top-0 h-screen z-40">
                 <div className="p-6 flex items-center gap-3">
                     <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
                         <div className="w-4 h-4 bg-white rounded-full animate-pulse" />
@@ -320,7 +320,7 @@ export default function Layout({ children }) {
             </aside>
 
             {isSettingsPage && (
-                <aside className="w-56 bg-[#F1F5F9] border-r border-slate-200 flex flex-col sticky top-0 h-screen animate-in slide-in-from-left duration-300">
+                <aside className="w-56 bg-slate-50/70 backdrop-blur-xl border-r border-slate-200/50 flex flex-col sticky top-0 h-screen animate-in slide-in-from-left duration-300 z-30">
                     <div className="p-5 border-b border-slate-200/60">
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Settings</p>
                     </div>
@@ -352,7 +352,7 @@ export default function Layout({ children }) {
             )}
 
             {isTransactions && (
-                <aside className="w-56 bg-[#F1F5F9] border-r border-slate-200 flex flex-col sticky top-0 h-screen animate-in slide-in-from-left duration-300">
+                <aside className="w-56 bg-slate-50/70 backdrop-blur-xl border-r border-slate-200/50 flex flex-col sticky top-0 h-screen animate-in slide-in-from-left duration-300 z-30">
                     <div className="p-5 border-b border-slate-200/60">
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Manage</p>
                     </div>
@@ -385,7 +385,7 @@ export default function Layout({ children }) {
 
             <div className="flex-1 flex flex-col relative">
                 <header className={cn(
-                    "h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 flex items-center justify-between fixed top-0 right-0 z-50 transition-all duration-300",
+                    "h-20 bg-white/70 backdrop-blur-xl border-b border-slate-200/50 px-8 flex items-center justify-between fixed top-0 right-0 z-50 transition-all duration-300",
                     (isSettingsPage || isTransactions) ? "left-[30rem]" : "left-64"
                 )}>
                     <div className="flex items-center">

@@ -17,7 +17,16 @@ export default {
           text: '#064e3b',   // Dark green text
           gray: '#f9fafb',   // Card background
         }
-      }
+      },
+      animation: {
+        'bounce-slow': 'bounce-slow 2s ease-in-out infinite',
+      },
+      keyframes: {
+        'bounce-slow': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-8px)' },
+        },
+      },
     },
   },
   plugins: [],

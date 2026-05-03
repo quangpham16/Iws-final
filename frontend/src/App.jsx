@@ -11,15 +11,35 @@ import GoalsPage from './pages/GoalsPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import Layout from './components/Layout';
+import ScrollToTop from './components/ScrollToTop';
+
+// Info Pages
+import AboutPage from './pages/AboutPage';
+import BlogPage from './pages/BlogPage';
+import CareersPage from './pages/CareersPage';
+import ContactPage from './pages/ContactPage';
+import SecurityPage from './pages/SecurityPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/setup-wallet" element={<WalletSetupPage />} />
+
+        {/* Info Pages */}
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/blog" element={<BlogPage />} />
+        <Route path="/careers" element={<CareersPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/security" element={<SecurityPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
 
         {/* Protected Routes inside Layout */}
         <Route path="/dashboard" element={<Layout><DashboardPage /></Layout>} />

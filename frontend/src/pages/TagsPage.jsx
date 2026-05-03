@@ -81,7 +81,7 @@ export default function TagsPage() {
                         <div 
                             key={tag.id} 
                             style={{ backgroundColor: `${tag.colorHex}10`, borderColor: `${tag.colorHex}30`, color: tag.colorHex }}
-                            className="flex items-center gap-3 px-6 py-4 rounded-3xl border-2 font-black text-sm group hover:scale-105 transition-all shadow-sm"
+                            className="flex items-center gap-3 px-6 py-4 rounded-3xl border-2 font-black text-sm group hover:scale-105 hover:-translate-y-1 transition-all duration-300 shadow-sm"
                         >
                             <Hash size={18} />
                             <span className="uppercase tracking-widest">{tag.name}</span>

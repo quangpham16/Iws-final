@@ -85,9 +85,9 @@ export default function SubscriptionsPage() {
             </div>
 
             {subscriptions.length === 0 ? (
-                <div className="bg-white p-20 rounded-[3rem] border border-dashed border-gray-200 flex flex-col items-center text-center">
-                    <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-6">
-                        <RefreshCcw size={48} strokeWidth={1.5} />
+                <div className="bg-white p-20 rounded-[3rem] border border-dashed border-gray-200 flex flex-col items-center text-center shadow-sm">
+                    <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center text-[#106E4E] mb-6 shadow-inner">
+                        <RefreshCcw size={48} strokeWidth={1.5} className="animate-bounce-slow" />
                     </div>
                     <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">No subscriptions tracked</h3>
                     <p className="text-gray-400 font-medium max-w-md">Add your recurring services like Netflix, Spotify, or gym memberships to see your true monthly run rate.</p>
@@ -99,7 +99,7 @@ export default function SubscriptionsPage() {
                         const isHighValue = sub.frequency === 'monthly' && amount > 50 || sub.frequency === 'yearly' && amount > 500;
                         
                         return (
-                            <div key={sub.id} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+                            <div key={sub.id} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-50 group-hover:bg-[#106E4E]/10 transition-colors duration-700" />
                                 
                                 <div className="relative z-10">

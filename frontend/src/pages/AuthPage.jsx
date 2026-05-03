@@ -113,7 +113,7 @@ export default function AuthPage() {
     };
 
     return (
-        <div className="flex min-h-screen bg-[#fcfdfc] font-sans selection:bg-emerald-100 selection:text-emerald-900">
+        <div className="flex min-h-screen bg-[#fcfdfc] font-sans selection:bg-emerald-100 selection:text-emerald-900 animate-in fade-in slide-in-from-bottom-8 duration-700">
             {/* LEFT COLUMN */}
             <div className="relative hidden w-1/2 lg:flex flex-col justify-between p-16 overflow-hidden bg-emerald-900">
                 <div className="absolute inset-0 opacity-30 bg-[url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80')] bg-cover bg-center mix-blend-overlay" />

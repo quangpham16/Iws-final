@@ -20,9 +20,9 @@ const formatNumber = (num) => {
 };
 
 const MetricCard = ({ title, value = 0, subtext, icon: Icon, trend = 'neutral' }) => (
-  <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col justify-between h-full hover:shadow-md transition-all">
+  <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col justify-between h-full hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
     <div className="flex justify-between items-start mb-8">
-      <div className="p-3 rounded-2xl bg-gray-50 text-gray-400">
+      <div className="p-3 rounded-2xl bg-emerald-50 text-[#106E4E]">
         <Icon size={22} />
       </div>
       <div className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 bg-gray-50 text-gray-400 rounded-full">
@@ -121,7 +121,7 @@ export default function DashboardPage() {
                 icon={Wallet}
                 trend="up"
             />
-            <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col justify-between h-full hover:shadow-md transition-all">
+            <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col justify-between h-full hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                 <div className="flex justify-between items-start mb-8">
                 <div className="p-3 rounded-2xl bg-gray-50 text-emerald-600">
                     <TrendingUp size={22} />
@@ -141,7 +141,7 @@ export default function DashboardPage() {
                 </div>
                 </div>
             </div>
-            <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col justify-between h-full hover:shadow-md transition-all">
+            <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col justify-between h-full hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                 <div className="flex justify-between items-start mb-8">
                 <div className="p-3 rounded-2xl bg-gray-50 text-rose-500">
                     <Zap size={22} />
@@ -200,7 +200,7 @@ export default function DashboardPage() {
                                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
                                     cursor={{ stroke: '#F3F4F6', strokeWidth: 2, strokeDasharray: '5 5' }}
                                 />
-                                <Area type="monotone" dataKey="amount" stroke="#106E4E" strokeWidth={3} fillOpacity={1} fill="url(#colorAmount)" />
+                                <Area type="monotone" dataKey="amount" stroke="#106E4E" strokeWidth={3} fillOpacity={1} fill="url(#colorAmount)" isAnimationActive={true} animationDuration={1500} animationEasing="ease-in-out" />
                             </AreaChart>
                         </ResponsiveContainer>
                     ) : (
@@ -259,8 +259,8 @@ export default function DashboardPage() {
                     </div>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6 py-12">
-                        <div className="w-24 h-24 rounded-[2rem] bg-gray-50 flex items-center justify-center text-gray-200">
-                        <ArrowRightLeft size={40} strokeWidth={1} />
+                        <div className="w-24 h-24 rounded-[2rem] bg-emerald-50 flex items-center justify-center text-[#106E4E] shadow-inner">
+                        <ArrowRightLeft size={40} strokeWidth={1.5} className="animate-bounce-slow" />
                         </div>
                         <div className="space-y-1">
                         <p className="text-sm font-black text-gray-900">Activity Idle</p>

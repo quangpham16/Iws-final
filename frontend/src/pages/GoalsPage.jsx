@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Trophy, Clock, Target, TrendingUp, X } from 'lucide-react';
 import { goalApi } from '../services/api';
+import { motion } from 'framer-motion';
+
+const fadeInUp = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
+};
+
+const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: { staggerChildren: 0.1 }
+    }
+};
 
 export default function GoalsPage() {
     const [goals, setGoals] = useState([]);
@@ -62,7 +76,7 @@ export default function GoalsPage() {
     );
 
     return (
-        <div className="space-y-12 max-w-[1600px] mx-auto w-full animate-in fade-in duration-700">
+        <motion.div initial="hidden" animate="visible" variants={fadeInUp} className="space-y-12 max-w-[1600px] mx-auto w-full">
             {/* Header Section */}
             <div className="flex items-end justify-between">
                 <div className="space-y-1">
@@ -81,7 +95,7 @@ export default function GoalsPage() {
                     </div>
                     <button 
                         onClick={() => setShowAdd(true)}
-                        className="bg-gray-900 text-white px-6 py-4 rounded-2xl font-black text-sm hover:bg-[#106E4E] transition-all flex items-center gap-2 shadow-xl shadow-gray-900/10"
+                        className="bg-[#106E4E] text-white px-6 py-4 rounded-2xl font-black text-sm hover:bg-[#0d5a3f] hover:-translate-y-0.5 transition-all flex items-center gap-2 shadow-xl shadow-[#106E4E]/20"
                     >
                         <Plus size={18} /> Define Aspiration
                     </button>
@@ -89,15 +103,15 @@ export default function GoalsPage() {
             </div>
 
             {goals.length === 0 ? (
-                <div className="bg-white p-20 rounded-[3rem] border border-dashed border-gray-200 flex flex-col items-center text-center">
-                    <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-6">
-                        <Trophy size={48} strokeWidth={1.5} />
+                <motion.div variants={fadeInUp} className="bg-white p-20 rounded-[3rem] border border-dashed border-gray-200 flex flex-col items-center text-center shadow-sm">
+                    <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center text-[#106E4E] mb-6 shadow-inner">
+                        <Trophy size={48} strokeWidth={1.5} className="animate-bounce-slow" />
                     </div>
                     <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">No goals defined</h3>
                     <p className="text-gray-400 font-medium max-w-md">Set your first financial goal to start building wealth intentionally.</p>
-                </div>
+                </motion.div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {goals.map((goal, index) => {
                         const target = parseFloat(goal.targetAmount) || 0;
                         const current = parseFloat(goal.currentAmount) || 0;
@@ -105,7 +119,7 @@ export default function GoalsPage() {
                         const isCompleted = progress >= 100;
                         
                         return (
-                            <div key={goal.id} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all relative overflow-hidden group">
+                            <motion.div variants={fadeInUp} key={goal.id} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
                                 <div 
                                     className="absolute top-0 left-0 w-full h-2 transition-all duration-1000 opacity-80" 
                                     style={{ backgroundColor: goal.colorHex || '#106E4E' }} 
@@ -170,79 +184,79 @@ export default function GoalsPage() {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </motion.div>
                         );
                     })}
-                </div>
+                </motion.div>
             )}
 
             {showAdd && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-500 border border-gray-100">
                         <div className="p-8 border-b border-gray-50 flex items-center justify-between">
                             <h3 className="text-2xl font-black text-gray-900 tracking-tight">Define Aspiration</h3>
                             <button onClick={() => setShowAdd(false)} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-2xl transition-all">
                                 <X size={20} />
                             </button>
                         </div>
-                        <form onSubmit={handleAdd} className="p-8 space-y-6">
+                        <form onSubmit={handleAdd} className="p-8 space-y-6 bg-slate-50/50">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Goal Name</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Goal Name</label>
                                 <input 
                                     type="text" 
                                     required
                                     value={newGoal.name}
                                     onChange={e => setNewGoal({...newGoal, name: e.target.value})}
-                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all placeholder:text-gray-300"
+                                    className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all placeholder:text-gray-300 shadow-sm"
                                     placeholder="e.g. Home Downpayment"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target Amount ($)</label>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Target Amount ($)</label>
                                     <input 
                                         type="number" 
                                         required
                                         value={newGoal.targetAmount}
                                         onChange={e => setNewGoal({...newGoal, targetAmount: e.target.value})}
-                                        className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 tabular-nums focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all placeholder:text-gray-300"
+                                        className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-900 tabular-nums focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all placeholder:text-gray-300 shadow-sm"
                                         placeholder="10000.00"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Theme Color</label>
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Theme Color</label>
                                     <div className="flex items-center gap-2">
                                         <input 
                                             type="color" 
                                             value={newGoal.colorHex}
                                             onChange={e => setNewGoal({...newGoal, colorHex: e.target.value})}
-                                            className="w-12 h-14 p-1 bg-gray-50 border border-gray-100 rounded-2xl cursor-pointer"
+                                            className="w-12 h-14 p-1 bg-white border border-gray-200 rounded-2xl cursor-pointer shadow-sm"
                                         />
                                         <input 
                                             type="text" 
                                             value={newGoal.colorHex}
                                             onChange={e => setNewGoal({...newGoal, colorHex: e.target.value})}
-                                            className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 uppercase focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all"
+                                            className="w-full px-4 py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-900 uppercase focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all shadow-sm"
                                         />
                                     </div>
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target Date (Optional)</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Target Date (Optional)</label>
                                 <input 
                                     type="date" 
                                     value={newGoal.targetDate}
                                     onChange={e => setNewGoal({...newGoal, targetDate: e.target.value})}
-                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all"
+                                    className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all shadow-sm"
                                 />
                             </div>
-                            <button type="submit" className="w-full py-5 bg-gray-900 text-white font-black rounded-2xl hover:bg-[#106E4E] shadow-xl shadow-gray-900/10 transition-all mt-4">
+                            <button type="submit" className="w-full py-5 bg-[#106E4E] text-white font-black rounded-2xl hover:bg-[#0d5a3f] shadow-xl shadow-[#106E4E]/20 transition-all hover:-translate-y-0.5 mt-4">
                                 Initialize Goal
                             </button>
                         </form>
                     </div>
                 </div>
             )}
-        </div>
+        </motion.div>
     );
 }

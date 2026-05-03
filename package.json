@@ -2,7 +2,7 @@
   "name": "fullstack-app",
   "version": "1.0.0",
   "scripts": {
-    "dev": "concurrently \"cd backend && mvn spring-boot:run\" \"cd frontend && npm run dev\""
+    "dev": "concurrently \"cd backend && set JAVA_HOME=D:\\STUDY\\APPLICATION\\JAVA&& .\\mvnw.cmd spring-boot:run\" \"cd frontend && npm run dev\""
   },
   "devDependencies": {
     "concurrently": "^8.0.0"

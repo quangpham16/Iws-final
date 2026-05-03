@@ -44,7 +44,7 @@ export default function CategoriesPage() {
                 </div>
                 <button 
                     onClick={() => setShowAdd(true)}
-                    className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg active:scale-95"
+                    className="flex items-center gap-2 bg-[#106E4E] hover:bg-[#0d5a3f] text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-xl shadow-[#106E4E]/20 active:scale-95 hover:-translate-y-0.5"
                 >
                     <Plus size={20} />
                     New Category
@@ -58,7 +58,7 @@ export default function CategoriesPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {categories.map((cat) => (
-                        <div key={cat.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm group hover:shadow-xl transition-all">
+                        <div key={cat.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                             <div className="flex items-start justify-between mb-4">
                                 <div 
                                     className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg"
@@ -128,7 +128,7 @@ export default function CategoriesPage() {
                             </div>
                             <div className="flex gap-4 pt-4">
                                 <button type="button" onClick={() => setShowAdd(false)} className="flex-1 py-4 text-slate-500 font-bold hover:bg-slate-50 rounded-2xl transition-all">Cancel</button>
-                                <button type="submit" className="flex-1 py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all shadow-lg">Save</button>
+                                <button type="submit" className="flex-1 py-4 bg-[#106E4E] text-white font-bold rounded-2xl hover:bg-[#0d5a3f] transition-all shadow-lg shadow-[#106E4E]/20">Save</button>
                             </div>
                         </form>
                     </div>
