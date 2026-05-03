@@ -18,6 +18,7 @@ public class WalletMapper {
                 .initialBalance(entity.getInitialBalance())
                 .currentBalance(entity.getCurrentBalance())
                 .institutionName(entity.getInstitutionName())
+                .colorHex(entity.getColorHex())
                 .isActive(entity.getIsActive())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
@@ -35,6 +36,7 @@ public class WalletMapper {
                 .initialBalance(dto.getInitialBalance())
                 .currentBalance(dto.getCurrentBalance())
                 .institutionName(dto.getInstitutionName())
+                .colorHex(dto.getColorHex())
                 .isActive(dto.getIsActive())
                 .build();
     }

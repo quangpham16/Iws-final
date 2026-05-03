@@ -124,7 +124,7 @@ export default function CategoriesPanel() {
             </div>
 
             {showModal && (
-                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+                <div className="fixed inset-0 bg-gray-900/40 z-[9999] flex items-center justify-center p-6 animate-in fade-in duration-300">
                     <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-300">
                         <div className="flex items-center justify-between mb-8">
                             <h2 className="text-2xl font-black text-gray-900">{editingCat ? 'Edit Category' : 'New Category'}</h2>

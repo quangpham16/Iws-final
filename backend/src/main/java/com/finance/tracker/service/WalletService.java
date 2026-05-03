@@ -69,6 +69,7 @@ public class WalletService {
         existing.setInitialBalance(updatedDto.getInitialBalance());
         existing.setCurrentBalance(updatedDto.getCurrentBalance());
         existing.setInstitutionName(updatedDto.getInstitutionName());
+        existing.setColorHex(updatedDto.getColorHex());
         existing.setIsActive(updatedDto.getIsActive());
         existing.setUpdatedAt(java.time.LocalDateTime.now());
         return walletMapper.toDTO(walletRepository.save(existing));

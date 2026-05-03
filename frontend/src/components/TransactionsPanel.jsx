@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
     Plus, Search, ChevronDown, ChevronLeft, ChevronRight,
-    ArrowUpDown, ArrowUp, ArrowDown, X, Edit2, Hash, Wallet
+    ArrowUpDown, ArrowUp, ArrowDown, X, Edit2, Hash, Wallet,
+    ArrowRight, ArrowLeft
 } from 'lucide-react';
 import { transactionApi } from '../services/transactionService';
 import { walletApi } from '../services/walletService';
@@ -27,6 +29,7 @@ function SortHeader({ label, field, sortField, sortDir, onSort }) {
 }
 
 export default function TransactionsPanel() {
+    const [searchParams] = useSearchParams();
     const [transactions, setTransactions] = useState([]);
     const [wallets, setWallets] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -38,6 +41,7 @@ export default function TransactionsPanel() {
     const [filterCategory, setFilterCategory] = useState('ALL');
     const [filterTag, setFilterTag] = useState('ALL');
     const [filterWallet, setFilterWallet] = useState('ALL');
+    const [filterType, setFilterType] = useState('ALL'); // ALL, SENT, RECEIVED
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
     const [search, setSearch] = useState('');
@@ -49,10 +53,33 @@ export default function TransactionsPanel() {
 
     const [form, setForm] = useState({
         amount: '', categoryId: '', walletId: '',
-        date: new Date().toISOString().split('T')[0], note: '', tagIds: []
+        date: new Date().toISOString().split('T')[0], note: '', tagIds: [], type: 'EXPENSE'
     });
 
+    // Set wallet filter from URL parameter
+    useEffect(() => {
+        const walletId = searchParams.get('wallet');
+        if (walletId) {
+            setFilterWallet(walletId);
+        }
+    }, [searchParams]);
+
     useEffect(() => { fetchData(); }, []);
+
+    // Helper function to get transfer direction
+    const getTransferDirection = (t, categories, wallets) => {
+        const category = categories.find(c => c.id === t.categoryId);
+        if (!category || category.type !== 'transfer') return null;
+        
+        // For transfers, we need to determine sender and receiver
+        // This is a simplified logic - in a real app, you'd track the source wallet
+        const sourceWallet = wallets.find(w => w.id === t.walletId);
+        return {
+            isTransfer: true,
+            sourceWallet: sourceWallet?.name || 'Unknown',
+            direction: 'out' // Simplified - in real app, track source vs dest wallet
+        };
+    };
 
     const fetchData = async () => {
         try {
@@ -68,16 +95,17 @@ export default function TransactionsPanel() {
         if (transaction) {
             setEditingTransaction(transaction);
             setForm({
-                amount: transaction.amount || '',
+                amount: transaction.amount ? Math.abs(transaction.amount) : '',
                 categoryId: transaction.categoryId || '', walletId: transaction.walletId || '',
                 date: transaction.date || new Date().toISOString().split('T')[0],
                 note: transaction.note || '',
-                tagIds: transaction.tagIds || []
+                tagIds: transaction.tagIds || [],
+                type: transaction.amount < 0 ? 'EXPENSE' : 'INCOME'
             });
         } else {
             setEditingTransaction(null);
             setForm({ amount: '', categoryId: '', walletId: '',
-                date: new Date().toISOString().split('T')[0], note: '', tagIds: [] });
+                date: new Date().toISOString().split('T')[0], note: '', tagIds: [], type: 'EXPENSE' });
         }
         setShowAdd(true);
     };
@@ -85,15 +113,23 @@ export default function TransactionsPanel() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const payload = {
+                ...form,
+                categoryId: form.categoryId ? Number(form.categoryId) : null,
+                walletId: form.walletId ? Number(form.walletId) : null,
+                amount: form.type === 'EXPENSE' ? -Math.abs(Number(form.amount)) : Math.abs(Number(form.amount))
+            };
+            delete payload.type;
+
             if (editingTransaction) {
-                await transactionApi.update(editingTransaction.id, form);
+                await transactionApi.update(editingTransaction.id, payload);
             } else {
-                await transactionApi.create(form);
+                await transactionApi.create(payload);
             }
             setShowAdd(false);
             setEditingTransaction(null);
             setForm({ amount: '', categoryId: '', walletId: '',
-                date: new Date().toISOString().split('T')[0], note: '', tagIds: [] });
+                date: new Date().toISOString().split('T')[0], note: '', tagIds: [], type: 'EXPENSE' });
             fetchData();
         } catch (err) { console.error(err); }
     };
@@ -115,6 +151,24 @@ export default function TransactionsPanel() {
         if (filterCategory !== 'ALL') data = data.filter(t => t.categoryId === Number(filterCategory));
         if (filterTag !== 'ALL') data = data.filter(t => t.tagIds?.includes(Number(filterTag)));
         if (filterWallet !== 'ALL') data = data.filter(t => t.walletId === Number(filterWallet));
+        
+        // Filter by type (Sent/Received)
+        if (filterType !== 'ALL') {
+            data = data.filter(t => {
+                const category = categories.find(c => c.id === t.categoryId);
+                const amount = parseFloat(t.amount) || 0;
+                
+                if (filterType === 'SENT') {
+                    // Sent: expense OR transfer with positive amount
+                    return category?.type === 'expense' || (category?.type === 'transfer' && amount > 0);
+                } else if (filterType === 'RECEIVED') {
+                    // Received: income OR transfer with negative amount
+                    return category?.type === 'income' || (category?.type === 'transfer' && amount < 0);
+                }
+                return true;
+            });
+        }
+        
         if (dateFrom) data = data.filter(t => t.date >= dateFrom);
         if (dateTo) data = data.filter(t => t.date <= dateTo);
         if (search) data = data.filter(t =>
@@ -128,7 +182,7 @@ export default function TransactionsPanel() {
             return 0;
         });
         return data;
-    }, [transactions, filterCategory, filterTag, filterWallet, dateFrom, dateTo, search, sortField, sortDir]);
+    }, [transactions, filterCategory, filterTag, filterWallet, filterType, dateFrom, dateTo, search, sortField, sortDir, categories]);
 
     const totalPages = Math.ceil(filtered.length / pageSize) || 1;
     const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
@@ -136,10 +190,10 @@ export default function TransactionsPanel() {
     const endEntry = Math.min(page * pageSize, filtered.length);
 
     const resetFilters = () => {
-        setFilterCategory('ALL'); setFilterTag('ALL'); setFilterWallet('ALL');
+        setFilterCategory('ALL'); setFilterTag('ALL'); setFilterWallet('ALL'); setFilterType('ALL');
         setDateFrom(''); setDateTo(''); setSearch(''); setPage(1);
     };
-    const hasFilters = filterCategory !== 'ALL' || filterTag !== 'ALL' || filterWallet !== 'ALL' || dateFrom || dateTo || search;
+    const hasFilters = filterCategory !== 'ALL' || filterTag !== 'ALL' || filterWallet !== 'ALL' || filterType !== 'ALL' || dateFrom || dateTo || search;
 
     if (loading) return (
         <div className="flex items-center justify-center h-64">
@@ -185,6 +239,18 @@ export default function TransactionsPanel() {
                             <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                         </div>
                     </div>
+                    <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-gray-400">type</span>
+                        <div className="relative">
+                            <select value={filterType} onChange={e => { setFilterType(e.target.value); setPage(1); }}
+                                className="appearance-none pl-4 pr-9 py-2.5 rounded-2xl border-2 border-gray-200 bg-white text-gray-700 text-sm font-bold focus:outline-none focus:border-[#106E4E] cursor-pointer">
+                                <option value="ALL">All Types</option>
+                                <option value="SENT">Sent</option>
+                                <option value="RECEIVED">Received</option>
+                            </select>
+                            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                        </div>
+                    </div>
                     <span className="text-gray-300 font-bold">·</span>
                     <div className="flex items-center gap-3">
                         <span className="text-sm font-bold text-gray-400">from</span>
@@ -222,6 +288,7 @@ export default function TransactionsPanel() {
                                 <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Date</th>
                                 <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Note</th>
                                 <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Category</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Type</th>
                                 <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Tags</th>
                                 <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Wallet</th>
                                 <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Amount</th>
@@ -230,7 +297,7 @@ export default function TransactionsPanel() {
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             {paginated.length === 0 ? (
-                                <tr><td colSpan={8} className="px-6 py-20 text-center text-gray-400 font-bold">No transactions found</td></tr>
+                                <tr><td colSpan={9} className="px-6 py-20 text-center text-gray-400 font-bold">No transactions found</td></tr>
                             ) : paginated.map(t => {
                                 const dateStr = t.date ? new Date(t.date + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
                                 const txnTags = tags.filter(tag => t.tagIds?.includes(tag.id));
@@ -247,15 +314,58 @@ export default function TransactionsPanel() {
                                         </td>
                                         <td className="px-6 py-5">
                                             {category ? (
-                                                <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase px-3 py-1.5 rounded-xl" style={{ backgroundColor: `${category.colorHex}20`, color: category.colorHex }}>
-                                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: category.colorHex }} />
+                                                <span className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase px-3 py-1.5 rounded-xl ${category.type === 'transfer' ? 'bg-gray-100 text-gray-700' : ''}`} style={{ backgroundColor: category.type !== 'transfer' ? `${category.colorHex}20` : undefined, color: category.type !== 'transfer' ? category.colorHex : undefined }}>
+                                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: category.type !== 'transfer' ? category.colorHex : '#9ca3af' }} />
                                                     {category.name}
+                                                    {category.type === 'transfer' && (
+                                                        <span className="ml-1 text-[9px] font-medium text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded-full">Transfer</span>
+                                                    )}
                                                 </span>
                                             ) : t.categoryId ? (
                                                 <span className="text-xs font-black uppercase tracking-widest text-gray-500 bg-gray-100 px-3 py-1 rounded-xl">ID: {t.categoryId}</span>
                                             ) : (
                                                 <span className="text-xs text-gray-300 font-medium">—</span>
                                             )}
+                                        </td>
+                                        <td className="px-6 py-5">
+                                            {(() => {
+                                                const category = categories.find(c => c.id === t.categoryId);
+                                                const amount = parseFloat(t.amount) || 0;
+                                                
+                                                if (category?.type === 'income') {
+                                                    return (
+                                                        <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                            <ArrowRight size={12} />
+                                                            Received
+                                                        </span>
+                                                    );
+                                                } else if (category?.type === 'expense') {
+                                                    return (
+                                                        <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200">
+                                                            <ArrowLeft size={12} />
+                                                            Sent
+                                                        </span>
+                                                    );
+                                                } else if (category?.type === 'transfer') {
+                                                    // For transfer, check amount sign
+                                                    if (amount < 0) {
+                                                        return (
+                                                            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                                <ArrowRight size={12} />
+                                                                Received
+                                                            </span>
+                                                        );
+                                                    } else {
+                                                        return (
+                                                            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200">
+                                                                <ArrowLeft size={12} />
+                                                                Sent
+                                                            </span>
+                                                        );
+                                                    }
+                                                }
+                                                return <span className="text-xs text-gray-300 font-medium">—</span>;
+                                            })()}
                                         </td>
                                         <td className="px-6 py-5">
                                             <div className="flex flex-wrap gap-1.5">
@@ -270,7 +380,16 @@ export default function TransactionsPanel() {
                                         </td>
                                         <td className="px-6 py-5">
                                             {wallet ? (
-                                                <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-gray-100 text-gray-600">
+                                                <span 
+                                                    className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl"
+                                                    style={{
+                                                        backgroundColor: wallet.colorHex ? `${wallet.colorHex}15` : '#f3f4f6',
+                                                        color: wallet.colorHex || '#4b5563',
+                                                        borderWidth: '1px',
+                                                        borderStyle: 'solid',
+                                                        borderColor: wallet.colorHex ? `${wallet.colorHex}40` : '#e5e7eb'
+                                                    }}
+                                                >
                                                     <Wallet size={12} />
                                                     {wallet.name}
                                                 </span>
@@ -279,9 +398,39 @@ export default function TransactionsPanel() {
                                             )}
                                         </td>
                                         <td className="px-6 py-5 text-right">
-                                            <span className="text-base font-black tabular-nums text-gray-900">
-                                                ${t.amount ? parseFloat(t.amount).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '0'}
-                                            </span>
+                                            {(() => {
+                                                const category = categories.find(c => c.id === t.categoryId);
+                                                const amount = parseFloat(t.amount) || 0;
+                                                const absAmount = Math.abs(amount);
+                                                const formattedAmount = absAmount.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                                                
+                                                // Determine color and sign based on category type
+                                                let colorClass = 'text-gray-900';
+                                                let sign = '';
+                                                
+                                                if (category?.type === 'income') {
+                                                    colorClass = 'text-emerald-600';
+                                                    sign = '+';
+                                                } else if (category?.type === 'expense') {
+                                                    colorClass = 'text-rose-600';
+                                                    sign = '-';
+                                                } else if (category?.type === 'transfer') {
+                                                    // For transfer, negative = received, positive = sent
+                                                    if (amount < 0) {
+                                                        colorClass = 'text-emerald-600';
+                                                        sign = '+';
+                                                    } else {
+                                                        colorClass = 'text-rose-600';
+                                                        sign = '-';
+                                                    }
+                                                }
+                                                
+                                                return (
+                                                    <span className={`text-base font-black tabular-nums ${colorClass}`}>
+                                                        {sign}{formattedAmount}₫
+                                                    </span>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="px-4 py-5 text-right">
                                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
@@ -347,7 +496,7 @@ export default function TransactionsPanel() {
 
             {/* Add/Edit Modal */}
             {showAdd && (
-                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md z-50 flex items-center justify-center p-6 animate-in fade-in duration-300">
+                <div className="fixed inset-0 bg-gray-900/40 z-50 flex items-center justify-center p-6 animate-in fade-in duration-300">
                     <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl animate-in slide-in-from-bottom-8 duration-500 overflow-hidden max-h-[90vh] overflow-y-auto">
                         <div className="p-8 border-b border-gray-50 flex items-center justify-between">
                             <h3 className="text-2xl font-black text-gray-900 tracking-tight">{editingTransaction ? 'Edit Transaction' : 'Record Activity'}</h3>
@@ -356,12 +505,22 @@ export default function TransactionsPanel() {
                             </button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-8">
+                            <div className="flex bg-gray-50 p-1.5 rounded-2xl mb-6">
+                                <button type="button" onClick={() => setForm(f => ({ ...f, type: 'EXPENSE' }))}
+                                    className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${form.type === 'EXPENSE' ? 'bg-white text-rose-500 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
+                                    Expense
+                                </button>
+                                <button type="button" onClick={() => setForm(f => ({ ...f, type: 'INCOME' }))}
+                                    className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${form.type === 'INCOME' ? 'bg-white text-emerald-500 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
+                                    Income
+                                </button>
+                            </div>
                             <div className="grid grid-cols-2 gap-5">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Amount ($)</label>
                                     <input type="number" required value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
                                         className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 tabular-nums focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all placeholder:text-gray-300"
-                                        placeholder="0.00" />
+                                        placeholder="0.00" min="0" step="0.01" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Category</label>

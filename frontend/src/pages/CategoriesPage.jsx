@@ -83,7 +83,7 @@ export default function CategoriesPage() {
             )}
 
             {showAdd && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+                <div className="fixed inset-0 bg-slate-900/40 z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
                     <div className="bg-white w-full max-w-sm rounded-[40px] p-10 shadow-2xl animate-in zoom-in-95 duration-300">
                         <h2 className="text-2xl font-black text-slate-800 mb-8">New Category</h2>
                         <form onSubmit={handleAdd} className="space-y-6">

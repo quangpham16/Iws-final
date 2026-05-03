@@ -327,7 +327,7 @@ export default function SubscriptionsPanel() {
 
             {/* Add / Edit Modal */}
             {showForm && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-md animate-in fade-in duration-300">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 animate-in fade-in duration-300">
                     <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-500 max-h-[90vh] overflow-y-auto">
                         <div className="p-8 border-b border-gray-50 flex items-center justify-between">
                             <h3 className="text-2xl font-black text-gray-900 tracking-tight">

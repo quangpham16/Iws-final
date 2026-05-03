@@ -30,4 +30,9 @@ public class BudgetController {
         budgetService.deleteBudget(userId, id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<BudgetDTO> update(@RequestHeader("X-User-Id") Long userId, @PathVariable Long id, @RequestBody BudgetDTO budgetDTO) {
+        return ResponseEntity.ok(budgetService.updateBudget(userId, id, budgetDTO));
+    }
 }
