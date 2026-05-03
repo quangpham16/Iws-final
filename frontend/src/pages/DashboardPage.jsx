@@ -1,279 +1,752 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  TrendingUp, 
-  ShieldCheck, 
-  Wallet, 
-  Circle, 
-  Zap, 
-  ChevronRight, 
-  ArrowRightLeft,
-  MoreHorizontal
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import {
+    Calendar,
+    ChevronDown,
+    Download,
+    ArrowUpRight,
+    TrendingUp,
+    TrendingDown,
+    Wallet,
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer,
+    PieChart,
+    Pie,
+    Cell,
+} from 'recharts';
 import { transactionApi } from '../services/transactionService';
 import { walletApi } from '../services/walletService';
+import { categoryApi } from '../services/categoryService';
+import { goalApi } from '../services/goalService';
+import { tagApi } from '../services/tagService';
 
-const formatNumber = (num) => {
-  if (num === undefined || num === null || isNaN(num)) return '0';
-  const n = Number(num);
-  return n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const DONUT_FALLBACK = ['#0f766e', '#14b8a6', '#5eead4', '#99f6e4', '#ccfbf1', '#94a3b8'];
+
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const formatMoney = (n) => {
+    const x = Number(n);
+    if (Number.isNaN(x)) return '0';
+    return x.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 };
 
-const MetricCard = ({ title, value = 0, subtext, icon: Icon, trend = 'neutral' }) => (
-  <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col justify-between h-full hover:shadow-md transition-all">
-    <div className="flex justify-between items-start mb-8">
-      <div className="p-3 rounded-2xl bg-gray-50 text-gray-400">
-        <Icon size={22} />
-      </div>
-      <div className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 bg-gray-50 text-gray-400 rounded-full">
-        <Circle size={4} fill="currentColor" className={trend === 'up' ? 'text-emerald-500' : trend === 'down' ? 'text-rose-500' : 'text-gray-400'} />
-        Live
-      </div>
-    </div>
-    <div>
-      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{title}</p>
-      <h3 className="text-3xl font-black text-gray-900 tabular-nums">${formatNumber(value)}</h3>
-      <p className="text-[10px] font-medium text-gray-400 mt-3 flex items-center gap-2">
-        <span className="w-1 h-1 rounded-full bg-[#106E4E]"></span>
-        {subtext}
-      </p>
-    </div>
-  </div>
-);
+function endOfMonth(d) {
+    return new Date(d.getFullYear(), d.getMonth() + 1, 0);
+}
+
+function inMonth(dateStr, ref) {
+    const t = new Date(dateStr);
+    return t.getFullYear() === ref.getFullYear() && t.getMonth() === ref.getMonth();
+}
+
+function inYear(dateStr, ref) {
+    const t = new Date(dateStr);
+    return t.getFullYear() === ref.getFullYear();
+}
+
+function prevMonth(ref) {
+    return new Date(ref.getFullYear(), ref.getMonth() - 1, 1);
+}
+
+function prevYear(ref) {
+    return new Date(ref.getFullYear() - 1, ref.getMonth(), 1);
+}
+
+/** Income/expense buckets for charts & totals. Transfer: negative amount = nhận (in), positive = đi ra (out). */
+function classifyAmount(txn, catById) {
+    const raw = parseFloat(txn.amount) || 0;
+    const amt = Math.abs(raw);
+    const cat = txn.categoryId != null ? catById[txn.categoryId] : null;
+    if (cat?.type === 'income') return { income: amt, expense: 0 };
+    if (cat?.type === 'expense') return { income: 0, expense: amt };
+    if (cat?.type === 'transfer') {
+        if (raw < 0) return { income: amt, expense: 0 };
+        return { income: 0, expense: amt };
+    }
+    return { income: 0, expense: 0 };
+}
+
+function pctTrend(cur, prev) {
+    if (prev <= 0) return cur > 0 ? 100 : 0;
+    return ((cur - prev) / prev) * 100;
+}
 
 export default function DashboardPage() {
-    const [summary, setSummary] = useState({ total: 0, count: 0, balance: 0, totalIncome: 0, totalExpense: 0 });
-    const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [transactions, setTransactions] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [wallets, setWallets] = useState([]);
+    const [goals, setGoals] = useState([]);
+    const [tags, setTags] = useState([]);
+    const [totalBalance, setTotalBalance] = useState(0);
+    const [period, setPeriod] = useState('month');
+    const [walletFilter, setWalletFilter] = useState('all');
+    const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
+    const [walletMenuOpen, setWalletMenuOpen] = useState(false);
 
     useEffect(() => {
-        fetchData();
+        let cancelled = false;
+        (async () => {
+            try {
+                const [transRes, catRes, walRes, goalRes, tagRes, balRes] = await Promise.all([
+                    transactionApi.getAll(),
+                    categoryApi.getAll(),
+                    walletApi.getAll(),
+                    goalApi.getAll(),
+                    tagApi.getAll(),
+                    walletApi.getTotalBalance(),
+                ]);
+                if (cancelled) return;
+                setTransactions(Array.isArray(transRes.data) ? transRes.data : []);
+                setCategories(Array.isArray(catRes.data) ? catRes.data : []);
+                setWallets(Array.isArray(walRes.data) ? walRes.data : []);
+                setGoals(Array.isArray(goalRes.data) ? goalRes.data : []);
+                setTags(Array.isArray(tagRes.data) ? tagRes.data : []);
+                setTotalBalance(Number(balRes.data?.totalBalance) || 0);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
-    const fetchData = async () => {
-        try {
-            const [sumRes, transRes, walletTotalRes] = await Promise.all([
-                transactionApi.getSummary(),
-                transactionApi.getAll(),
-                walletApi.getTotalBalance()
-            ]);
-            
-            const total = sumRes.data?.total ?? 0;
-            const count = sumRes.data?.count ?? 0;
-            const balance = walletTotalRes.data?.totalBalance ?? 0;
-            
-            setSummary({
-                total: Number(total) || 0,
-                count: Number(count) || 0,
-                balance: Number(balance) || 0,
-                totalIncome: Number(total) || 0,
-                totalExpense: 0
-            });
-            setTransactions(Array.isArray(transRes.data) ? transRes.data : []);
-        } catch (err) {
-            console.error('Dashboard fetch error:', err);
-            setSummary({ total: 0, count: 0, balance: 0, totalIncome: 0, totalExpense: 0 });
-        } finally {
-            setLoading(false);
-        }
-    };
+    const catById = useMemo(() => {
+        const m = {};
+        categories.forEach((c) => {
+            m[c.id] = c;
+        });
+        return m;
+    }, [categories]);
 
-    if (loading) return (
-        <div className="flex items-center justify-center h-full">
-            <div className="w-10 h-10 border-4 border-[#106E4E] border-t-transparent rounded-full animate-spin" />
-        </div>
+    const filteredTx = useMemo(() => {
+        if (walletFilter === 'all') return transactions;
+        const wid = Number(walletFilter);
+        return transactions.filter((t) => Number(t.walletId) === wid);
+    }, [transactions, walletFilter]);
+
+    const periodTx = useMemo(() => {
+        const ref = new Date();
+        return filteredTx.filter((t) =>
+            period === 'month' ? inMonth(t.date, ref) : inYear(t.date, ref)
+        );
+    }, [filteredTx, period]);
+
+    const prevPeriodTx = useMemo(() => {
+        const ref = period === 'month' ? prevMonth(new Date()) : prevYear(new Date());
+        return filteredTx.filter((t) =>
+            period === 'month' ? inMonth(t.date, ref) : inYear(t.date, ref)
+        );
+    }, [filteredTx, period]);
+
+    const totals = useMemo(() => {
+        let inc = 0;
+        let exp = 0;
+        periodTx.forEach((t) => {
+            const { income, expense } = classifyAmount(t, catById);
+            inc += income;
+            exp += expense;
+        });
+        return { income: inc, expense: exp, net: inc - exp };
+    }, [periodTx, catById]);
+
+    const prevTotals = useMemo(() => {
+        let inc = 0;
+        let exp = 0;
+        prevPeriodTx.forEach((t) => {
+            const { income, expense } = classifyAmount(t, catById);
+            inc += income;
+            exp += expense;
+        });
+        return { income: inc, expense: exp, net: inc - exp };
+    }, [prevPeriodTx, catById]);
+
+    const moneyFlowData = useMemo(() => {
+        const ref = new Date();
+        if (period === 'year') {
+            const year = ref.getFullYear();
+            const months = MONTH_LABELS.map((month, i) => ({ month, income: 0, expense: 0, key: i }));
+            filteredTx.forEach((t) => {
+                const d = new Date(t.date);
+                if (d.getFullYear() !== year) return;
+                const m = d.getMonth();
+                const { income, expense } = classifyAmount(t, catById);
+                months[m].income += income;
+                months[m].expense += expense;
+            });
+            return months.slice(0, ref.getMonth() + 1);
+        }
+        const dim = endOfMonth(ref).getDate();
+        const days = [];
+        for (let day = 1; day <= dim; day++) {
+            days.push({
+                month: String(day),
+                income: 0,
+                expense: 0,
+                key: day,
+            });
+        }
+        filteredTx.forEach((t) => {
+            if (!inMonth(t.date, ref)) return;
+            const d = new Date(t.date);
+            const dom = d.getDate();
+            const { income, expense } = classifyAmount(t, catById);
+            if (days[dom - 1]) {
+                days[dom - 1].income += income;
+                days[dom - 1].expense += expense;
+            }
+        });
+        return days;
+    }, [filteredTx, period, catById]);
+
+    const budgetSlices = useMemo(() => {
+        const map = {};
+        periodTx.forEach((t) => {
+            const { expense } = classifyAmount(t, catById);
+            if (expense <= 0) return;
+            const cat = t.categoryId != null ? catById[t.categoryId] : null;
+            const name = cat?.name || 'Uncategorized';
+            map[name] = (map[name] || 0) + expense;
+        });
+        const entries = Object.entries(map).sort((a, b) => b[1] - a[1]);
+        return entries.map(([name, value], i) => {
+            const cat = categories.find((c) => c.name === name);
+            return {
+                name,
+                value,
+                color: cat?.colorHex || DONUT_FALLBACK[i % DONUT_FALLBACK.length],
+            };
+        });
+    }, [periodTx, catById, categories]);
+
+    const budgetTotal = useMemo(() => budgetSlices.reduce((s, x) => s + x.value, 0), [budgetSlices]);
+
+    const recentTransactions = useMemo(
+        () =>
+            [...filteredTx]
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 5),
+        [filteredTx]
     );
 
-    const chartData = transactions.slice(-10).map(t => ({
-        name: t.date,
-        amount: t.amount,
-        type: t.type
-    }));
+    const handleExportCsv = () => {
+        const header = 'Date,Amount,Name,Wallet,Category\n';
+        const rows = [...filteredTx]
+            .sort((a, b) => new Date(a.date) - new Date(b.date))
+            .map((t) => {
+                const cat = t.categoryId != null ? catById[t.categoryId] : null;
+                const w = wallets.find((x) => Number(x.id) === Number(t.walletId));
+                const amt = parseFloat(t.amount) || 0;
+                const signed = cat?.type === 'income' ? amt : -amt;
+                const name = (t.note || cat?.name || '').replace(/,/g, ';');
+                return `${t.date},${signed},"${name}","${(w?.name || '').replace(/,/g, ';')}","${(cat?.name || '').replace(/,/g, ';')}"`;
+            })
+            .join('\n');
+        const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `verdant-transactions-${period}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const incomeTrend = pctTrend(totals.income, prevTotals.income);
+    const expenseTrend = pctTrend(totals.expense, prevTotals.expense);
+    const savingsTrend = pctTrend(totals.net, prevTotals.net);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[40vh]">
+                <div className="w-10 h-10 border-4 border-[#106E4E] border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     return (
-        <div className="space-y-12 max-w-[1600px] mx-auto w-full animate-in fade-in duration-700">
-            {/* Hero Section */}
-            <div className="flex items-end justify-between">
-            <div className="space-y-1">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em]">Architectural Overview</p>
-                <h1 className="text-5xl font-black text-gray-900 tracking-tighter">
-                Your financial <span className="text-[#22C55E]">harvest.</span>
-                </h1>
-            </div>
-            <div className="flex gap-4">
-                <div className="flex items-center gap-2 bg-green-50 px-4 py-2.5 rounded-xl border border-green-100">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                <span className="text-[10px] font-bold text-green-700 uppercase tracking-widest">Market Status: Open</span>
-                </div>
-                <div className="flex items-center gap-2 bg-blue-50 px-4 py-2.5 rounded-xl border border-blue-100">
-                <ShieldCheck size={14} className="text-blue-600" />
-                <span className="text-[10px] font-bold text-blue-700 uppercase tracking-widest">Sync Level: Secured</span>
-                </div>
-            </div>
-            </div>
+        <div className="w-full min-w-0 space-y-6 animate-in fade-in duration-500 pb-0">
+            {/* Toolbar — Export CSV only on the right */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-3">
+                    <button
+                        type="button"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-emerald-50 hover:border-emerald-200 transition-colors"
+                        aria-label="Calendar"
+                    >
+                        <Calendar size={18} />
+                    </button>
 
-            {/* Metric Grid */}
-            <div className="grid grid-cols-3 gap-8">
-            <MetricCard 
-                title="Total Net Worth" 
-                value={summary.balance} 
-                subtext="Aggregated across all assets"
-                icon={Wallet}
-                trend="up"
-            />
-            <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col justify-between h-full hover:shadow-md transition-all">
-                <div className="flex justify-between items-start mb-8">
-                <div className="p-3 rounded-2xl bg-gray-50 text-emerald-600">
-                    <TrendingUp size={22} />
-                </div>
-                <div className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 bg-gray-50 text-gray-400 rounded-full">
-                    <Circle size={4} fill="currentColor" className="text-emerald-500" />
-                    Live
-                </div>
-                </div>
-                <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Monthly Income</p>
-                <h3 className="text-3xl font-black text-gray-900 tabular-nums">${formatNumber(summary.totalIncome)}</h3>
-                <div className="mt-4 flex items-end gap-1 h-8">
-                    {[...Array(12)].map((_, i) => (
-                    <div key={i} className={`flex-1 rounded-sm h-1 ${i < 6 ? 'bg-emerald-100' : 'bg-gray-50'}`} style={{height: i < 6 ? `${(i+1)*10}px` : '4px'}}></div>
-                    ))}
-                </div>
-                </div>
-            </div>
-            <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col justify-between h-full hover:shadow-md transition-all">
-                <div className="flex justify-between items-start mb-8">
-                <div className="p-3 rounded-2xl bg-gray-50 text-rose-500">
-                    <Zap size={22} />
-                </div>
-                <div className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 bg-gray-50 text-gray-400 rounded-full">
-                    <Circle size={4} fill="currentColor" className="text-rose-500" />
-                    Live
-                </div>
-                </div>
-                <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Monthly Expenses</p>
-                <h3 className="text-3xl font-black text-gray-900 tabular-nums">${formatNumber(summary.totalExpense)}</h3>
-                <div className="mt-6 h-1.5 w-full bg-gray-50 rounded-full overflow-hidden">
-                    <div className="h-full bg-rose-500 transition-all duration-1000" style={{width: (summary.totalIncome || 0) > 0 ? `${Math.min(100, ((summary.totalExpense || 0) / (summary.totalIncome || 1)) * 100)}%` : '0%'}}></div>
-                </div>
-                </div>
-            </div>
-            </div>
-
-            {/* Chart & Activity Grid */}
-            <div className="grid grid-cols-12 gap-8">
-            <div className="col-span-8 space-y-8">
-                <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100">
-                <div className="flex items-center justify-between mb-12">
-                    <div>
-                    <h3 className="text-xl font-black text-gray-900 tracking-tighter">Performance Analysis</h3>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Monthly harvest telemetry</p>
-                    </div>
-                    <div className="flex gap-2 bg-gray-50 p-1.5 rounded-2xl">
-                    {['6M', '1Y', 'ALL'].map((period) => (
-                        <button 
-                        key={period}
-                        className={`px-6 py-2 rounded-xl text-xs font-bold transition-all ${
-                            period === 'ALL' ? 'bg-white text-[#106E4E] shadow-sm' : 'text-gray-400 hover:text-gray-600'
-                        }`}
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setPeriodMenuOpen((o) => !o);
+                                setWalletMenuOpen(false);
+                            }}
+                            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-emerald-50 hover:border-emerald-200 transition-colors min-w-[140px]"
                         >
-                        {period}
+                            {period === 'month' ? 'This month' : 'This year'}
+                            <ChevronDown size={16} className="text-gray-400" />
                         </button>
-                    ))}
+                        {periodMenuOpen && (
+                            <>
+                                <button
+                                    type="button"
+                                    className="fixed inset-0 z-40 cursor-default"
+                                    aria-label="Close menu"
+                                    onClick={() => setPeriodMenuOpen(false)}
+                                />
+                                <div className="absolute left-0 top-full z-50 mt-2 w-44 rounded-xl border border-gray-100 bg-white py-1 shadow-lg">
+                                    <button
+                                        type="button"
+                                        className="block w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-emerald-50"
+                                        onClick={() => {
+                                            setPeriod('month');
+                                            setPeriodMenuOpen(false);
+                                        }}
+                                    >
+                                        This month
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="block w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-emerald-50"
+                                        onClick={() => {
+                                            setPeriod('year');
+                                            setPeriodMenuOpen(false);
+                                        }}
+                                    >
+                                        This year
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
-                
-                {/* Recharts Implementation instead of zero-state */}
-                <div className="h-72 w-full mt-4">
-                    {chartData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={280}>
-                            <AreaChart data={chartData}>
-                                <defs>
-                                    <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#106E4E" stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor="#106E4E" stopOpacity={0}/>
-                                    </linearGradient>
-                                </defs>
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 'bold'}} dy={10} />
-                                <Tooltip 
-                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
-                                    cursor={{ stroke: '#F3F4F6', strokeWidth: 2, strokeDasharray: '5 5' }}
-                                />
-                                <Area type="monotone" dataKey="amount" stroke="#106E4E" strokeWidth={3} fillOpacity={1} fill="url(#colorAmount)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
+
+                <button
+                    type="button"
+                    onClick={handleExportCsv}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#106E4E] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/15 hover:bg-[#0d5c44] transition-colors sm:self-auto self-start"
+                >
+                    <Download size={18} />
+                    Export CSV
+                </button>
+            </div>
+
+            {/* Summary cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 items-stretch">
+                <SummaryCard
+                    title="Total balance"
+                    value={`$${formatMoney(totalBalance)}`}
+                    footerHint="Across all wallets"
+                />
+                <SummaryCard
+                    title="Income"
+                    value={`$${formatMoney(totals.income)}`}
+                    trendPct={incomeTrend}
+                    subtitle={`vs last ${period === 'month' ? 'month' : 'year'}`}
+                />
+                <SummaryCard
+                    title="Expense"
+                    value={`$${formatMoney(totals.expense)}`}
+                    trendPct={expenseTrend}
+                    subtitle={`vs last ${period === 'month' ? 'month' : 'year'}`}
+                    isExpense
+                />
+                <SummaryCard
+                    title="Net savings"
+                    value={`$${formatMoney(Math.max(0, totals.net))}`}
+                    trendPct={savingsTrend}
+                    subtitle={`vs last ${period === 'month' ? 'month' : 'year'}`}
+                />
+            </div>
+
+            {/* Charts — wider money flow */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <div className="lg:col-span-9 rounded-[1.25rem] border border-gray-100 bg-white p-5 sm:p-6 shadow-sm min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+                        <div>
+                            <h2 className="text-lg font-bold text-gray-900">Money flow</h2>
+                            <p className="text-sm text-gray-500">
+                                Income vs expense ({period === 'month' ? 'by day' : 'by month'})
+                            </p>
+                        </div>
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setWalletMenuOpen((o) => !o);
+                                    setPeriodMenuOpen(false);
+                                }}
+                                className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-[#F8FAFC] px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-emerald-50 hover:border-emerald-200 transition-colors"
+                            >
+                                {walletFilter === 'all' ? 'All accounts' : wallets.find((w) => String(w.id) === walletFilter)?.name || 'Wallet'}
+                                <ChevronDown size={14} className="text-gray-400" />
+                            </button>
+                            {walletMenuOpen && (
+                                <>
+                                    <button
+                                        type="button"
+                                        className="fixed inset-0 z-40 cursor-default"
+                                        aria-label="Close menu"
+                                        onClick={() => setWalletMenuOpen(false)}
+                                    />
+                                    <div className="absolute right-0 top-full z-50 mt-2 max-h-56 w-52 overflow-y-auto rounded-xl border border-gray-100 bg-white py-1 shadow-lg">
+                                        <button
+                                            type="button"
+                                            className="block w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-emerald-50"
+                                            onClick={() => {
+                                                setWalletFilter('all');
+                                                setWalletMenuOpen(false);
+                                            }}
+                                        >
+                                            All accounts
+                                        </button>
+                                        {wallets.map((w) => (
+                                            <button
+                                                key={w.id}
+                                                type="button"
+                                                className="block w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-emerald-50 truncate"
+                                                onClick={() => {
+                                                    setWalletFilter(String(w.id));
+                                                    setWalletMenuOpen(false);
+                                                }}
+                                            >
+                                                {w.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-6 mb-2 text-xs font-semibold">
+                        <span className="flex items-center gap-2 text-gray-600">
+                            <span className="h-2.5 w-2.5 rounded-full bg-[#106E4E]" />
+                            Income
+                        </span>
+                        <span className="flex items-center gap-2 text-gray-600">
+                            <span className="h-2.5 w-2.5 rounded-full bg-emerald-200" />
+                            Expense
+                        </span>
+                    </div>
+                    <div className="h-[min(22rem,42vh)] min-h-[280px] w-full">
+                        {moneyFlowData.some((d) => d.income > 0 || d.expense > 0) ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={moneyFlowData} barGap={6}>
+                                    <XAxis
+                                        dataKey="month"
+                                        tick={{ fontSize: 11, fill: '#64748b' }}
+                                        axisLine={false}
+                                        tickLine={false}
+                                    />
+                                    <YAxis
+                                        tick={{ fontSize: 11, fill: '#64748b' }}
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tickFormatter={(v) => (v >= 1000 ? `$${v / 1000}k` : `$${v}`)}
+                                    />
+                                    <Tooltip
+                                        cursor={{ fill: 'rgba(16, 110, 78, 0.06)' }}
+                                        contentStyle={{
+                                            borderRadius: 12,
+                                            border: '1px solid #e2e8f0',
+                                            boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
+                                        }}
+                                        formatter={(value) => [`$${formatMoney(value)}`, '']}
+                                    />
+                                    <Bar dataKey="income" fill="#106E4E" radius={[6, 6, 0, 0]} maxBarSize={36} />
+                                    <Bar dataKey="expense" fill="#a7f3d0" radius={[6, 6, 0, 0]} maxBarSize={36} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                                No income/expense in this range yet — add categorized transactions to see the chart.
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="lg:col-span-3 rounded-[1.25rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-sm flex flex-col min-w-0">
+                    <h2 className="text-lg font-bold text-gray-900 mb-1">Budget</h2>
+                    <p className="text-sm text-gray-500 mb-3">Spending by category</p>
+                    {budgetSlices.length === 0 ? (
+                        <div className="flex flex-1 items-center justify-center text-sm text-gray-400 min-h-[180px]">
+                            No expense data this period.
+                        </div>
                     ) : (
-                        <div className="flex flex-col items-center justify-center h-full space-y-2">
-                            <p className="text-xs font-black text-gray-300 uppercase tracking-[0.3em]">No telemetry data available</p>
-                            <p className="text-[10px] text-gray-200">Start transactions to see growth</p>
+                        <div className="flex flex-1 flex-col items-center gap-3 min-h-[220px]">
+                            <ul className="w-full space-y-1.5 text-[11px] max-h-[120px] overflow-y-auto pr-1">
+                                {budgetSlices.map((s) => (
+                                    <li key={s.name} className="flex items-center justify-between gap-2 text-gray-600">
+                                        <span className="flex items-center gap-2 min-w-0">
+                                            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: s.color }} />
+                                            <span className="truncate">{s.name}</span>
+                                        </span>
+                                        <span className="font-semibold text-gray-800 shrink-0">${formatMoney(s.value)}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                            <div className="relative h-[170px] w-[170px] shrink-0 mx-auto">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={budgetSlices}
+                                            dataKey="value"
+                                            innerRadius={50}
+                                            outerRadius={68}
+                                            paddingAngle={2}
+                                            strokeWidth={0}
+                                        >
+                                            {budgetSlices.map((entry) => (
+                                                <Cell key={entry.name} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip formatter={(v) => `$${formatMoney(v)}`} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Total</p>
+                                    <p className="text-lg font-black text-[#064e3b]">${formatMoney(budgetTotal)}</p>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
-                </div>
-
-                {/* Wealth Intel Banner */}
-                <div className="bg-[#106E4E] p-12 rounded-[3rem] text-white relative overflow-hidden shadow-xl shadow-[#106E4E]/20">
-                <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
-                <div className="relative z-10 max-w-lg space-y-6">
-                    <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10">
-                    <Zap size={12} fill="currentColor" className="text-yellow-400" />
-                    Wealth Intel
-                    </div>
-                    <h2 className="text-4xl font-black tracking-tighter leading-none">Optimize your harvest with AI.</h2>
-                    <p className="text-white/60 text-sm leading-relaxed">
-                    Our neural engine analyzes global volatility to suggest the optimal harvest timing for your unique profile.
-                    </p>
-                    <button className="bg-white text-[#106E4E] px-8 py-4 rounded-2xl font-black text-sm hover:bg-gray-100 transition-all flex items-center gap-2">
-                    Learn More <ChevronRight size={18} />
-                    </button>
-                </div>
-                </div>
             </div>
 
-            <div className="col-span-4 h-full">
-                <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100 h-full flex flex-col">
-                <div className="flex items-center justify-between mb-10">
-                    <h3 className="text-xl font-black text-gray-900 tracking-tighter">Recent Activity</h3>
-                    <MoreHorizontal size={20} className="text-gray-300 cursor-pointer" />
+            {/* Compact transactions (same style as Transactions tab) + goals */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
+                <div className="lg:col-span-3 rounded-[2rem] border border-gray-100 bg-white overflow-hidden shadow-sm min-w-0">
+                    <div className="flex items-center justify-between gap-2 px-5 py-3 border-b border-gray-100 bg-[#106E4E]/5">
+                        <h2 className="text-base font-black text-gray-900 tracking-tight">Recent transactions</h2>
+                        <Link
+                            to="/transactions"
+                            className="text-[10px] font-black uppercase tracking-widest text-[#106E4E] hover:underline shrink-0"
+                        >
+                            See all →
+                        </Link>
+                    </div>
+                    <div className="overflow-x-auto max-h-[320px] overflow-y-auto">
+                        <table className="w-full border-collapse min-w-[640px]">
+                            <thead className="sticky top-0 z-10">
+                                <tr className="bg-[#106E4E]/5 border-b border-[#106E4E]/10">
+                                    <th className="px-4 py-2.5 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E] whitespace-nowrap">
+                                        Date
+                                    </th>
+                                    <th className="px-4 py-2.5 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">
+                                        Note
+                                    </th>
+                                    <th className="px-4 py-2.5 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">
+                                        Category
+                                    </th>
+                                    <th className="px-4 py-2.5 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">
+                                        Tags
+                                    </th>
+                                    <th className="px-4 py-2.5 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">
+                                        Wallet
+                                    </th>
+                                    <th className="px-4 py-2.5 text-right text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E] whitespace-nowrap">
+                                        Amount
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {recentTransactions.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="px-4 py-10 text-center text-gray-400 text-sm font-bold">
+                                            No transactions yet.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    recentTransactions.map((t) => {
+                                        const dateStr = t.date
+                                            ? new Date(t.date + 'T00:00:00').toLocaleDateString('en-GB', {
+                                                  day: '2-digit',
+                                                  month: 'short',
+                                                  year: 'numeric',
+                                              })
+                                            : '—';
+                                        const txnTags = tags.filter((tag) =>
+                                            (t.tagIds || []).some((tid) => Number(tid) === Number(tag.id))
+                                        );
+                                        const wallet = wallets.find((w) => Number(w.id) === Number(t.walletId));
+                                        const category = t.categoryId != null ? catById[t.categoryId] : null;
+                                        return (
+                                            <tr key={t.id} className="hover:bg-gray-50/60 transition-colors">
+                                                <td className="px-4 py-3 text-xs font-bold text-gray-500 whitespace-nowrap">
+                                                    {dateStr}
+                                                </td>
+                                                <td className="px-4 py-3 max-w-[100px]">
+                                                    {t.note ? (
+                                                        <p className="text-xs font-bold text-gray-900 line-clamp-2">{t.note}</p>
+                                                    ) : (
+                                                        <span className="text-[11px] text-gray-300 font-medium">—</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    {category ? (
+                                                        <span
+                                                            className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-1 rounded-xl max-w-[120px]"
+                                                            style={{
+                                                                backgroundColor: `${category.colorHex}20`,
+                                                                color: category.colorHex,
+                                                            }}
+                                                        >
+                                                            <span
+                                                                className="w-1.5 h-1.5 rounded-full shrink-0"
+                                                                style={{ backgroundColor: category.colorHex }}
+                                                            />
+                                                            <span className="truncate">{category.name}</span>
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[11px] text-gray-300 font-medium">—</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {txnTags.length > 0 ? (
+                                                            txnTags.slice(0, 2).map((tag) => (
+                                                                <span
+                                                                    key={tag.id}
+                                                                    className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border truncate max-w-[72px]"
+                                                                    style={{
+                                                                        backgroundColor: `${tag.colorHex}10`,
+                                                                        color: tag.colorHex,
+                                                                        borderColor: `${tag.colorHex}30`,
+                                                                    }}
+                                                                >
+                                                                    {tag.name}
+                                                                </span>
+                                                            ))
+                                                        ) : (
+                                                            <span className="text-[11px] text-gray-300 font-medium">—</span>
+                                                        )}
+                                                        {txnTags.length > 2 ? (
+                                                            <span className="text-[9px] font-bold text-gray-400">+{txnTags.length - 2}</span>
+                                                        ) : null}
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 align-top whitespace-normal">
+                                                    {wallet ? (
+                                                        <span className="inline-flex items-start gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-gray-100 text-gray-600 whitespace-normal">
+                                                            <Wallet size={12} className="shrink-0 mt-0.5" />
+                                                            <span className="break-words">{wallet.name}</span>
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[11px] text-gray-300 font-medium">—</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <span className="text-sm font-black tabular-nums text-gray-900">
+                                                        $
+                                                        {t.amount
+                                                            ? parseFloat(t.amount).toLocaleString(undefined, {
+                                                                  minimumFractionDigits: 0,
+                                                                  maximumFractionDigits: 0,
+                                                              })
+                                                            : '0'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                {transactions.length > 0 ? (
-                    <div className="flex-1 space-y-6">
-                        {transactions.slice(0, 5).map(t => (
-                            <div key={t.id} className="flex items-center justify-between group">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${t.type === 'INCOME' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'}`}>
-                                        <ArrowRightLeft size={18} />
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-gray-900 text-sm">{t.title}</p>
-                                        <p className="text-xs text-gray-400 font-medium">{t.date}</p>
-                                    </div>
-                                </div>
-                                <span className={`font-black tabular-nums ${t.type === 'INCOME' ? 'text-emerald-600' : 'text-gray-900'}`}>
-                                    {t.type === 'INCOME' ? '+' : '-'}${t.amount.toLocaleString()}
-                                </span>
-                            </div>
-                        ))}
+                <div className="lg:col-span-2 rounded-[1.25rem] border border-gray-100 bg-[#FAFBFC] p-5 sm:p-6 shadow-sm min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                        <h2 className="text-lg font-bold text-gray-900">Saving goals</h2>
+                        <Link to="/goals" className="text-xs font-semibold text-[#106E4E] hover:underline">
+                            Manage
+                        </Link>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-5">From your goals</p>
+                    {goals.length === 0 ? (
+                        <div className="text-sm text-gray-400 py-8 text-center">
+                            No goals yet.{' '}
+                            <Link to="/goals" className="text-[#106E4E] font-semibold hover:underline">
+                                Create one
+                            </Link>
+                        </div>
+                    ) : (
+                        <ul className="space-y-5">
+                            {goals.slice(0, 5).map((g) => {
+                                const target = parseFloat(g.targetAmount) || 0;
+                                const current = parseFloat(g.currentAmount) || 0;
+                                const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+                                return (
+                                    <li key={g.id}>
+                                        <div className="flex items-center justify-between gap-2 text-sm mb-2">
+                                            <span className="font-semibold text-gray-800 truncate">{g.name}</span>
+                                            <span className="text-gray-500 shrink-0 tabular-nums text-xs">
+                                                ${formatMoney(current)} / ${formatMoney(target)}
+                                            </span>
+                                        </div>
+                                        <div className="h-3 w-full rounded-full bg-emerald-100 overflow-hidden">
+                                            <div
+                                                className="h-full rounded-full bg-gradient-to-r from-[#106E4E] to-emerald-500 flex items-center justify-end pr-1 min-w-[2rem]"
+                                                style={{ width: `${pct}%` }}
+                                            >
+                                                <span className="text-[10px] font-bold text-white">{pct}%</span>
+                                            </div>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function SummaryCard({ title, value, trendPct, subtitle, footerHint, isExpense }) {
+    const showTrend = typeof trendPct === 'number' && !Number.isNaN(trendPct);
+    const up = showTrend && trendPct >= 0;
+    let good = up;
+    if (isExpense) good = !up;
+
+    return (
+        <div className="rounded-[1.25rem] border border-gray-100 bg-[#FAFBFC] px-6 py-7 min-h-[168px] flex flex-col shadow-sm relative overflow-hidden hover:border-emerald-200/80 transition-colors">
+            <button
+                type="button"
+                className="absolute top-5 right-5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-400 hover:text-[#106E4E] hover:border-emerald-200 transition-colors"
+                aria-label="Detail"
+            >
+                <ArrowUpRight size={18} />
+            </button>
+            <p className="text-sm font-medium text-gray-500 mb-2 pr-14">{title}</p>
+            <p className="text-3xl font-black text-gray-900 tracking-tight mb-auto pt-1">{value}</p>
+            <div className="mt-5">
+                {footerHint ? (
+                    <p className="text-xs font-semibold text-gray-400">{footerHint}</p>
+                ) : showTrend ? (
+                    <div
+                        className={`inline-flex flex-wrap items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-bold ${
+                            good ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                        }`}
+                    >
+                        {up ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                        {`${up ? '+' : ''}${trendPct.toFixed(1)}%`}
+                        <span className="font-medium text-gray-400 ml-1">{subtitle}</span>
                     </div>
                 ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6 py-12">
-                        <div className="w-24 h-24 rounded-[2rem] bg-gray-50 flex items-center justify-center text-gray-200">
-                        <ArrowRightLeft size={40} strokeWidth={1} />
-                        </div>
-                        <div className="space-y-1">
-                        <p className="text-sm font-black text-gray-900">Activity Idle</p>
-                        <p className="text-xs text-gray-400 max-w-[200px]">No recent transactions found in this cycle.</p>
-                        </div>
-                    </div>
+                    <p className="text-xs font-semibold text-gray-400">{subtitle || '—'}</p>
                 )}
-
-                <button className="w-full mt-auto py-5 border-2 border-dashed border-gray-100 rounded-[2rem] text-[10px] font-black text-gray-300 uppercase tracking-[0.4em] hover:border-[#106E4E] hover:text-[#106E4E] transition-all">
-                    Comprehensive Report
-                </button>
-                </div>
-            </div>
             </div>
         </div>
     );
