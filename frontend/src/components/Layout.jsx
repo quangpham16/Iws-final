@@ -429,7 +429,7 @@ export default function Layout({ children }) {
 
             <div className="flex-1 flex flex-col relative">
                 <header className={cn(
-                    "h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 flex items-center justify-between fixed top-0 right-0 z-50 transition-all duration-300",
+                    "h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 flex items-center justify-between fixed top-0 right-0 z-10 transition-all duration-300",
                     (isSettingsPage || isTransactions) ? "left-[30rem]" : "left-64"
                 )}>
                     <div className="flex items-center">

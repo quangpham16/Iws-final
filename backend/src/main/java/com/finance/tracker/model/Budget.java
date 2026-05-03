@@ -34,6 +34,9 @@ public class Budget {
     @Column(name = "amount", nullable = false)
     private java.math.BigDecimal amount;
 
+    @Column(name = "category_id")
+    private Long categoryId;
+
     @Builder.Default
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

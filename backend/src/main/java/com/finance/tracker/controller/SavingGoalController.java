@@ -1,6 +1,7 @@
 package com.finance.tracker.controller;
 
 import com.finance.tracker.dto.SavingGoalDTO;
+import com.finance.tracker.dto.FundRequest;
 import com.finance.tracker.service.SavingGoalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,11 @@ public class SavingGoalController {
     @PostMapping
     public ResponseEntity<SavingGoalDTO> create(@RequestHeader("X-User-Id") Long userId, @RequestBody SavingGoalDTO goalDTO) {
         return ResponseEntity.status(HttpStatus.CREATED).body(savingGoalService.createGoal(userId, goalDTO));
+    }
+
+    @PostMapping("/{id}/fund")
+    public ResponseEntity<SavingGoalDTO> fundGoal(@RequestHeader("X-User-Id") Long userId, @PathVariable Long id, @RequestBody FundRequest req) {
+        return ResponseEntity.ok(savingGoalService.fundGoal(userId, id, req.getWalletId(), req.getAmount()));
     }
 
     @DeleteMapping("/{id}")
