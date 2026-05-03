@@ -209,8 +209,7 @@ export default function SettingsPage() {
             };
             localStorage.setItem('user', JSON.stringify(updatedUser));
 
-            // Dispatch event to notify Layout to re-render
-            window.dispatchEvent(new StorageEvent('storage', { key: 'user' }));
+            window.dispatchEvent(new Event('user-updated'));
 
             setSuccess('Profile saved successfully!');
             setTimeout(() => setSuccess(''), 3000);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
     Plus, 
     MoreVertical, 
@@ -11,10 +11,39 @@ import {
     ArrowDownRight,
     Activity
 } from 'lucide-react';
-import { walletApi } from '../services/api';
+import { walletApi, transactionApi, categoryApi } from '../services/api';
+
+function inMonth(dateStr, ref) {
+    const t = new Date(dateStr);
+    return t.getFullYear() === ref.getFullYear() && t.getMonth() === ref.getMonth();
+}
+
+/** Nhận (xanh) / đi (đỏ): income nhận; expense đi; transfer: âm = nhận, dương = đi. */
+function walletInOutThisMonth(walletId, transactions, catById) {
+    const ref = new Date();
+    let inn = 0;
+    let out = 0;
+    transactions.forEach((t) => {
+        if (Number(t.walletId) !== Number(walletId)) return;
+        if (!inMonth(t.date, ref)) return;
+        const cat = t.categoryId != null ? catById[t.categoryId] : null;
+        const raw = parseFloat(t.amount) || 0;
+        const amt = Math.abs(raw);
+        if (!cat) return;
+        if (cat.type === 'income') inn += amt;
+        else if (cat.type === 'expense') out += amt;
+        else if (cat.type === 'transfer') {
+            if (raw < 0) inn += amt;
+            else out += amt;
+        }
+    });
+    return { inn, out };
+}
 
 export default function WalletsPage() {
     const [wallets, setWallets] = useState([]);
+    const [transactions, setTransactions] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingWallet, setEditingWallet] = useState(null);
@@ -26,14 +55,28 @@ export default function WalletsPage() {
 
     const fetchWallets = async () => {
         try {
-            const res = await walletApi.getAll();
-            setWallets(res.data);
+            const [walRes, txnRes, catRes] = await Promise.all([
+                walletApi.getAll(),
+                transactionApi.getAll(),
+                categoryApi.getAll(),
+            ]);
+            setWallets(Array.isArray(walRes.data) ? walRes.data : []);
+            setTransactions(Array.isArray(txnRes.data) ? txnRes.data : []);
+            setCategories(Array.isArray(catRes.data) ? catRes.data : []);
         } catch (error) {
             console.error("Error fetching wallets:", error);
         } finally {
             setLoading(false);
         }
     };
+
+    const catById = useMemo(() => {
+        const m = {};
+        categories.forEach((c) => {
+            m[c.id] = c;
+        });
+        return m;
+    }, [categories]);
 
     const handleOpenModal = (wallet = null) => {
         if (wallet) {
@@ -118,6 +161,10 @@ export default function WalletsPage() {
                     const bgClass = isGreen ? 'bg-[#106E4E] text-white shadow-[#106E4E]/20' : isDark ? 'bg-gray-900 text-white shadow-gray-900/20' : 'bg-white border border-gray-100 text-gray-900 shadow-gray-200/50';
                     const textMuted = isGreen || isDark ? 'text-white/60' : 'text-gray-400';
                     const borderClass = isGreen || isDark ? 'border-white/10' : 'border-gray-50';
+                    const { inn, out } = walletInOutThisMonth(wallet.id, transactions, catById);
+                    const inCls = isGreen || isDark ? 'text-emerald-300' : 'text-emerald-600';
+                    const outCls = isGreen || isDark ? 'text-rose-300' : 'text-rose-600';
+                    const flowSubCls = isGreen || isDark ? 'text-white/45' : 'text-gray-400';
 
                     return (
                         <div key={wallet.id} className={`p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden group transition-all hover:-translate-y-2 ${bgClass}`}>
@@ -158,6 +205,13 @@ export default function WalletsPage() {
                                 <div className={`mt-10 pt-6 border-t ${borderClass}`}>
                                     <p className={`text-[10px] font-bold uppercase tracking-[0.2em] mb-2 ${textMuted}`}>Available Balance</p>
                                     <h4 className="text-4xl font-black tabular-nums">₫{(wallet.currentBalance ?? wallet.initialBalance ?? 0).toLocaleString()}</h4>
+                                    <div className="mt-4 space-y-1">
+                                        <p className={`text-[10px] font-bold uppercase tracking-widest ${flowSubCls}`}>Tháng này</p>
+                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm font-black tabular-nums">
+                                            <span className={inCls}>Nhận +₫{Math.round(inn).toLocaleString('vi-VN')}</span>
+                                            <span className={outCls}>Đi −₫{Math.round(out).toLocaleString('vi-VN')}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -26,6 +26,7 @@ import {
     User
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { userApi } from '../services/userService';
 
 const sidebarItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -232,12 +233,55 @@ export default function Layout({ children }) {
     const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')) || { fullName: 'Guest', email: '' });
 
     useEffect(() => {
-        const handleStorageChange = () => {
+        let cancelled = false;
+        const refreshUserFromStorage = () => {
             const updatedUser = JSON.parse(localStorage.getItem('user')) || { fullName: 'Guest', email: '' };
             setUser(updatedUser);
         };
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
+
+        const syncProfileFromServer = async () => {
+            const raw = localStorage.getItem('user');
+            if (!raw) return;
+            let stored;
+            try {
+                stored = JSON.parse(raw);
+            } catch {
+                return;
+            }
+            if (!stored?.email) return;
+            try {
+                const { data } = await userApi.getProfile(stored.email);
+                if (cancelled) return;
+                const merged = {
+                    ...stored,
+                    fullName: data.fullName ?? stored.fullName,
+                    avatarUrl: data.avatarUrl ?? stored.avatarUrl,
+                    phoneNumber: data.phoneNumber ?? stored.phoneNumber,
+                    phoneCountryCode: data.phoneCountryCode ?? stored.phoneCountryCode,
+                    gender: data.gender ?? stored.gender,
+                    taxIdNumber: data.taxIdNumber ?? stored.taxIdNumber,
+                    taxCountryCode: data.taxCountryCode ?? stored.taxCountryCode,
+                    residentialAddress: data.residentialAddress ?? stored.residentialAddress,
+                    baseCurrencyCode: data.baseCurrencyCode ?? stored.baseCurrencyCode,
+                    timezone: data.timezone ?? stored.timezone,
+                    locale: data.locale ?? stored.locale,
+                };
+                localStorage.setItem('user', JSON.stringify(merged));
+                setUser(merged);
+            } catch {
+                // Keep existing localStorage user if API fails
+            }
+        };
+
+        syncProfileFromServer();
+
+        window.addEventListener('storage', refreshUserFromStorage);
+        window.addEventListener('user-updated', refreshUserFromStorage);
+        return () => {
+            cancelled = true;
+            window.removeEventListener('storage', refreshUserFromStorage);
+            window.removeEventListener('user-updated', refreshUserFromStorage);
+        };
     }, []);
 
     const [activeSettingsTab, setActiveSettingsTab] = useState(() => {
@@ -324,7 +368,7 @@ export default function Layout({ children }) {
                     <div className="p-5 border-b border-slate-200/60">
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Settings</p>
                     </div>
-                    <nav className="flex-1 p-3 space-y-1">
+                    <nav className="flex-1 p-3 pt-11 space-y-1">
                         {settingsTabs.map((tab) => {
                             const isActive = activeSettingsTab === tab.id;
                             const Icon = tab.icon;
@@ -356,7 +400,7 @@ export default function Layout({ children }) {
                     <div className="p-5 border-b border-slate-200/60">
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Manage</p>
                     </div>
-                    <nav className="flex-1 p-3 space-y-1">
+                    <nav className="flex-1 p-3 pt-11 space-y-1">
                         {transactionTabs.map((tab) => {
                             const isActive = activeTab === tab.id;
                             const Icon = tab.icon;
