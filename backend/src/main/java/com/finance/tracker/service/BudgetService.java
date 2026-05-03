@@ -25,7 +25,7 @@ public class BudgetService {
         List<Budget> budgets = budgetRepository.findByUserId(userId);
         return budgets.stream()
                 .map(budget -> {
-                    BigDecimal spent = transactionRepository.sumExpenseByDateRange(userId, budget.getStartDate(), budget.getEndDate());
+                    BigDecimal spent = transactionRepository.sumByDateRange(userId, budget.getStartDate(), budget.getEndDate());
                     return budgetMapper.toDTO(budget, spent);
                 })
                 .collect(Collectors.toList());
@@ -35,8 +35,9 @@ public class BudgetService {
     public BudgetDTO createBudget(Long userId, BudgetDTO dto) {
         Budget budget = budgetMapper.toEntity(dto);
         budget.setUserId(userId);
+        budget.setCreatedAt(java.time.LocalDateTime.now());
         Budget saved = budgetRepository.save(budget);
-        return budgetMapper.toDTO(saved, BigDecimal.ZERO);
+        return budgetMapper.toDTO(saved, java.math.BigDecimal.ZERO);
     }
 
     @Transactional

@@ -11,17 +11,19 @@ public class TransactionMapper {
         if (entity == null) return null;
         return TransactionDTO.builder()
                 .id(entity.getId())
-                .title(entity.getTitle())
-                .amount(entity.getAmount())
-                .type(entity.getType())
-                .category(entity.getCategory())
-                .date(entity.getDate())
-                .time(entity.getTime())
-                .note(entity.getNote())
+                .userId(entity.getUserId())
                 .walletId(entity.getWalletId())
+                .payeeId(entity.getPayeeId())
+                .date(entity.getDate())
+                .amount(entity.getAmount())
+                .currencyCode(entity.getCurrencyCode())
                 .status(entity.getStatus())
+                .note(entity.getNote())
+                .categoryId(entity.getCategoryId())
+                .tagIds(entity.getTagIds())
                 .source(entity.getSource())
                 .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
                 .build();
     }
 
@@ -29,15 +31,17 @@ public class TransactionMapper {
         if (dto == null) return null;
         return Transaction.builder()
                 .id(dto.getId())
-                .title(dto.getTitle())
-                .amount(dto.getAmount())
-                .type(dto.getType())
-                .category(dto.getCategory())
-                .date(dto.getDate())
-                .time(dto.getTime())
-                .note(dto.getNote())
+                .userId(dto.getUserId())
                 .walletId(dto.getWalletId())
+                .payeeId(dto.getPayeeId())
+                .date(dto.getDate())
+                .amount(dto.getAmount())
+                .currencyCode(dto.getCurrencyCode())
                 .status(dto.getStatus() != null ? dto.getStatus() : Transaction.TransactionStatus.cleared)
+                .note(dto.getNote())
+                .categoryId(dto.getCategoryId())
+                .tagIds(dto.getTagIds())
+                .source(dto.getSource() != null ? dto.getSource() : Transaction.TransactionSource.manual)
                 .build();
     }
 }

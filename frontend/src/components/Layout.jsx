@@ -62,7 +62,7 @@ function PageTitle({ pathname, hash }) {
             case '/wallets':
                 return { title: 'Wallet', highlight: 'Management.', subtitle: 'Financial Assets' };
             case '/transactions':
-                return { title: 'Transaction', highlight: 'History.', subtitle: 'Activity Log' };
+                return { title: 'Transaction', highlight: 'Management.', subtitle: 'Activity Log' };
             case '/budgets':
                 return { title: 'Budget', highlight: 'Planning.', subtitle: 'Financial Limits' };
             case '/goals':
@@ -383,8 +383,11 @@ export default function Layout({ children }) {
                 </aside>
             )}
 
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 flex items-center justify-between sticky top-0 z-10">
+            <div className="flex-1 flex flex-col relative">
+                <header className={cn(
+                    "h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 flex items-center justify-between fixed top-0 right-0 z-50 transition-all duration-300",
+                    (isSettingsPage || isTransactions) ? "left-[30rem]" : "left-64"
+                )}>
                     <div className="flex items-center">
                         <PageTitle pathname={location.pathname} hash={location.hash} />
                     </div>
@@ -412,7 +415,7 @@ export default function Layout({ children }) {
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto p-8">
+                <main className="flex-1 overflow-y-auto p-8 pt-28">
                     {children}
                 </main>
             </div>

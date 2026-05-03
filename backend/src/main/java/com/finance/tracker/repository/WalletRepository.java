@@ -18,11 +18,11 @@ public interface WalletRepository extends JpaRepository<Wallet, Long> {
     // Check if a wallet name already exists
     boolean existsByNameIgnoreCase(String name);
 
-    // Sum of all wallet balances
-    @Query("SELECT COALESCE(SUM(w.balance), 0) FROM Wallet w")
+    // Sum of all wallet current balances
+    @Query("SELECT COALESCE(SUM(w.currentBalance), 0) FROM Wallet w")
     BigDecimal sumTotalBalance();
 
-    // Sum of wallet balances for a specific user
-    @Query("SELECT COALESCE(SUM(w.balance), 0) FROM Wallet w WHERE w.userId = :userId")
+    // Sum of wallet current balances for a specific user
+    @Query("SELECT COALESCE(SUM(w.currentBalance), 0) FROM Wallet w WHERE w.userId = :userId")
     BigDecimal sumTotalBalanceByUserId(@org.springframework.data.repository.query.Param("userId") Long userId);
 }

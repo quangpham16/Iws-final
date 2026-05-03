@@ -16,25 +16,36 @@ public class Category {
     @Column(name = "user_id")
     private Long userId;
 
-    @Column(nullable = false)
+    @Column(name = "parent_category_id")
+    private Long parentCategoryId;
+
+    @Column(nullable = false, length = 100)
     private String name;
+
+    @Column(name = "name_vn", length = 100)
+    private String nameVn;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CategoryType type;
 
+    @Column(length = 50)
     private String icon;
 
-    @Column(name = "color_hex")
+    @Column(name = "color_hex", length = 7)
     private String colorHex;
 
-    @Builder.Default
-    @Column(name = "is_system")
-    private Boolean isSystem = false;
+    @Column(name = "is_active")
+    private Boolean isActive = true;
 
-    @Builder.Default
+    @Column(name = "sort_order")
+    private Integer sortOrder;
+
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     public enum CategoryType {
         expense, income, transfer

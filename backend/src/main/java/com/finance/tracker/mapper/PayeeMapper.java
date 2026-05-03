@@ -8,21 +8,23 @@ import org.springframework.stereotype.Component;
 public class PayeeMapper {
     public PayeeDTO toDTO(Payee payee) {
         if (payee == null) return null;
-        PayeeDTO dto = new PayeeDTO();
-        dto.setId(payee.getId());
-        dto.setName(payee.getName());
-        dto.setWebsite(payee.getWebsite());
-        dto.setNotes(payee.getNotes());
-        dto.setCreatedAt(payee.getCreatedAt());
-        return dto;
+        return PayeeDTO.builder()
+                .id(payee.getId())
+                .userId(payee.getUserId())
+                .name(payee.getName())
+                .website(payee.getWebsite())
+                .notes(payee.getNotes())
+                .createdAt(payee.getCreatedAt())
+                .build();
     }
 
     public Payee toEntity(PayeeDTO dto) {
         if (dto == null) return null;
-        Payee payee = new Payee();
-        payee.setName(dto.getName());
-        payee.setWebsite(dto.getWebsite());
-        payee.setNotes(dto.getNotes());
-        return payee;
+        return Payee.builder()
+                .userId(dto.getUserId())
+                .name(dto.getName())
+                .website(dto.getWebsite())
+                .notes(dto.getNotes())
+                .build();
     }
 }

@@ -1,6 +1,5 @@
 package com.finance.tracker.dto;
 
-import com.finance.tracker.model.Transaction.TransactionType;
 import com.finance.tracker.model.Transaction.TransactionStatus;
 import com.finance.tracker.model.Transaction.TransactionSource;
 import lombok.AllArgsConstructor;
@@ -11,7 +10,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -19,16 +18,17 @@ import java.time.LocalTime;
 @AllArgsConstructor
 public class TransactionDTO {
     private Long id;
-    private String title;
-    private BigDecimal amount;
-    private TransactionType type;
-    private String category;
-    private LocalDate date;
-    private LocalTime time;
-    private String note;
-    private Long payeeId;
+    private Long userId;
     private Long walletId;
+    private Long payeeId;
+    private LocalDate date;
+    private BigDecimal amount;
+    private String currencyCode;
     private TransactionStatus status;
+    private String note;
+    private Long categoryId;
+    private List<Long> tagIds;
     private TransactionSource source;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

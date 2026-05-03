@@ -1,7 +1,6 @@
 package com.finance.tracker.repository;
 
 import com.finance.tracker.model.Transaction;
-import com.finance.tracker.model.Transaction.TransactionType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -15,26 +14,27 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     // Filter by user
     List<Transaction> findByUserId(Long userId);
 
-    // Filter by type (INCOME / EXPENSE)
-    List<Transaction> findByType(TransactionType type);
-
     // Filter by category
-    List<Transaction> findByCategory(String category);
+    List<Transaction> findByCategoryId(Long categoryId);
+
+    // Filter by wallet (account)
+    List<Transaction> findByWalletId(Long walletId);
 
     // Filter by date range
     List<Transaction> findByDateBetween(LocalDate from, LocalDate to);
 
-    // Search by title (case-insensitive)
-    List<Transaction> findByTitleContainingIgnoreCase(String keyword);
+    // Sum of all transactions for user
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.userId = :userId")
+    java.math.BigDecimal sumTotalByUserId(Long userId);
 
-    // Sum of all income for user
-    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.type = 'INCOME' AND t.userId = :userId")
-    java.math.BigDecimal sumIncome(Long userId);
+    // Sum by date range
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.userId = :userId AND t.date BETWEEN :startDate AND :endDate")
+    java.math.BigDecimal sumByDateRange(Long userId, LocalDate startDate, LocalDate endDate);
 
-    // Sum of all expenses for user
-    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.type = 'EXPENSE' AND t.userId = :userId")
-    java.math.BigDecimal sumExpense(Long userId);
+    // Search by note (replacing title search)
+    List<Transaction> findByNoteContainingIgnoreCase(String keyword);
 
-    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.type = 'EXPENSE' AND t.userId = :userId AND t.date BETWEEN :startDate AND :endDate")
-    java.math.BigDecimal sumExpenseByDateRange(Long userId, LocalDate startDate, LocalDate endDate);
+    // Sum of transactions for a specific wallet
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.walletId = :walletId")
+    java.math.BigDecimal sumByWalletId(@org.springframework.data.repository.query.Param("walletId") Long walletId);
 }

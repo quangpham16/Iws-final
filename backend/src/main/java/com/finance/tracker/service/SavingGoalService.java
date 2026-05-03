@@ -28,6 +28,7 @@ public class SavingGoalService {
     public SavingGoalDTO createGoal(Long userId, SavingGoalDTO dto) {
         SavingGoal goal = savingGoalMapper.toEntity(dto);
         goal.setUserId(userId);
+        goal.setCreatedAt(java.time.LocalDateTime.now());
         SavingGoal saved = savingGoalRepository.save(goal);
         return savingGoalMapper.toDTO(saved);
     }

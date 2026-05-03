@@ -9,28 +9,28 @@ import java.math.BigDecimal;
 public class BudgetMapper {
     public BudgetDTO toDTO(Budget budget, BigDecimal spentAmount) {
         if (budget == null) return null;
-        BudgetDTO dto = new BudgetDTO();
-        dto.setId(budget.getId());
-        dto.setName(budget.getName());
-        dto.setPeriodType(budget.getPeriodType() != null ? budget.getPeriodType().name() : null);
-        dto.setStartDate(budget.getStartDate());
-        dto.setEndDate(budget.getEndDate());
-        dto.setAmount(budget.getAmount());
-        dto.setCreatedAt(budget.getCreatedAt());
-        dto.setSpentAmount(spentAmount != null ? spentAmount : BigDecimal.ZERO);
-        return dto;
+        return BudgetDTO.builder()
+                .id(budget.getId())
+                .userId(budget.getUserId())
+                .name(budget.getName())
+                .periodType(budget.getPeriodType())
+                .startDate(budget.getStartDate())
+                .endDate(budget.getEndDate())
+                .amount(budget.getAmount())
+                .spentAmount(spentAmount != null ? spentAmount : BigDecimal.ZERO)
+                .createdAt(budget.getCreatedAt())
+                .build();
     }
 
     public Budget toEntity(BudgetDTO dto) {
         if (dto == null) return null;
-        Budget budget = new Budget();
-        budget.setName(dto.getName());
-        if (dto.getPeriodType() != null) {
-            budget.setPeriodType(Budget.PeriodType.valueOf(dto.getPeriodType()));
-        }
-        budget.setStartDate(dto.getStartDate());
-        budget.setEndDate(dto.getEndDate());
-        budget.setAmount(dto.getAmount());
-        return budget;
+        return Budget.builder()
+                .userId(dto.getUserId())
+                .name(dto.getName())
+                .periodType(dto.getPeriodType())
+                .startDate(dto.getStartDate())
+                .endDate(dto.getEndDate())
+                .amount(dto.getAmount())
+                .build();
     }
 }

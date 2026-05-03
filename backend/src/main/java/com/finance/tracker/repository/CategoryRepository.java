@@ -8,4 +8,6 @@ import java.util.List;
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findByUserId(Long userId);
+    boolean existsByUserIdAndColorHex(Long userId, String colorHex);
+    boolean existsByUserIdAndColorHexAndIdNot(Long userId, String colorHex, Long id);
 }

@@ -27,6 +27,14 @@ export default function PayeesPanel() {
         } catch (err) { console.error(err); }
     };
 
+    const handleDelete = async (id) => {
+        if (!window.confirm('Delete this contact?')) return;
+        try {
+            await payeeApi.delete(id);
+            fetchPayees();
+        } catch (err) { console.error(err); }
+    };
+
     const filteredPayees = payees.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
 
     if (loading) return (
@@ -37,17 +45,29 @@ export default function PayeesPanel() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                    <input type="text" placeholder="Search contacts..."
-                        value={search} onChange={e => setSearch(e.target.value)}
-                        className="bg-white border-2 border-gray-100 pl-11 pr-6 py-3 rounded-2xl outline-none focus:border-[#106E4E] font-bold text-gray-700 w-64 shadow-sm text-sm" />
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <UserCheck size={24} className="text-orange-600" />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-black text-gray-900">Payees</h2>
+                        <p className="text-xs text-gray-400 font-medium">{payees.length} contacts</p>
+                    </div>
                 </div>
                 <button onClick={() => setShowAdd(true)}
-                    className="flex items-center gap-2 bg-gray-900 hover:bg-[#106E4E] text-white px-5 py-3 rounded-2xl font-black text-sm transition-all shadow-lg active:scale-95">
-                    <Plus size={16} /> New Contact
+                    className="flex items-center gap-2 bg-[#106E4E] hover:bg-[#0d593f] text-white px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-emerald-100 active:scale-95">
+                    <Plus size={18} /> Add Contact
                 </button>
+            </div>
+
+            {/* Search */}
+            <div className="relative max-w-md">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <input type="text" placeholder="Search payees..."
+                    value={search} onChange={e => setSearch(e.target.value)}
+                    className="w-full bg-white border border-gray-200 pl-12 pr-4 py-3 rounded-xl outline-none focus:border-[#106E4E] focus:ring-2 focus:ring-[#106E4E]/10 font-medium text-gray-700 shadow-sm transition-all" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -57,7 +77,9 @@ export default function PayeesPanel() {
                             <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-[#106E4E]/10 group-hover:text-[#106E4E] transition-colors">
                                 <UserCheck size={28} />
                             </div>
-                            <button className="p-3 text-gray-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all">
+                            <button 
+                                onClick={() => handleDelete(payee.id)}
+                                className="p-3 text-gray-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all">
                                 <Trash2 size={18} />
                             </button>
                         </div>

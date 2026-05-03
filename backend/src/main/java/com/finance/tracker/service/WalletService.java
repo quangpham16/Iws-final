@@ -56,6 +56,7 @@ public class WalletService {
         Wallet entity = walletMapper.toEntity(dto);
         entity.setUserId(userId);
         entity.setCreatedAt(java.time.LocalDateTime.now());
+        entity.setUpdatedAt(java.time.LocalDateTime.now());
         return walletMapper.toDTO(walletRepository.save(entity));
     }
 
@@ -63,9 +64,13 @@ public class WalletService {
         Wallet existing = walletRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Wallet", id));
         existing.setName(updatedDto.getName());
-        existing.setBalance(updatedDto.getBalance());
-        existing.setCurrency(updatedDto.getCurrency());
-        existing.setNote(updatedDto.getNote());
+        existing.setType(updatedDto.getType());
+        existing.setCurrencyCode(updatedDto.getCurrencyCode());
+        existing.setInitialBalance(updatedDto.getInitialBalance());
+        existing.setCurrentBalance(updatedDto.getCurrentBalance());
+        existing.setInstitutionName(updatedDto.getInstitutionName());
+        existing.setIsActive(updatedDto.getIsActive());
+        existing.setUpdatedAt(java.time.LocalDateTime.now());
         return walletMapper.toDTO(walletRepository.save(existing));
     }
 

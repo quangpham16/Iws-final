@@ -9,7 +9,8 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "transactions")
@@ -25,62 +26,49 @@ public class Transaction {
     @Column(name = "transaction_id")
     private Long id;
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @NotBlank(message = "Title is required")
-    @Column(nullable = false)
-    private String title;
+    @Column(name = "account_id")
+    private Long walletId;
+
+    @Column(name = "payee_id")
+    private Long payeeId;
+
+    @Column(name = "transaction_date", nullable = false)
+    private LocalDate date;
 
     @NotNull(message = "Amount is required")
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
 
-    @NotNull(message = "Type is required")
+    @Column(name = "currency_code", length = 3)
+    private String currencyCode;
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
-    private TransactionType type;   // INCOME | EXPENSE
-
-    @Column(length = 100)
-    private String category;
-
-    @NotNull(message = "Date is required")
-    @Column(name = "transaction_date", nullable = false)
-    private LocalDate date;
-
-    @Column(name = "transaction_time")
-    private LocalTime time;
-
-    @Column(length = 500)
-    private String note;
-
-    @Column(name = "payee_id")
-    private Long payeeId;
-
-    @Column(name = "wallet_id")
-    private Long walletId;
-
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false)
     private TransactionStatus status = TransactionStatus.cleared;
 
-    @Builder.Default
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String note;
+
+    @Column(name = "category_id")
+    private Long categoryId;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "transaction_tags", joinColumns = @JoinColumn(name = "transaction_id"))
+    @Column(name = "tag_id")
+    private List<Long> tagIds = new ArrayList<>();
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "source", nullable = false)
     private TransactionSource source = TransactionSource.manual;
 
-    @Builder.Default
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
-    @Builder.Default
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
-
-    public enum TransactionType {
-        INCOME, EXPENSE
-    }
+    private LocalDateTime updatedAt;
 
     public enum TransactionStatus {
         pending, cleared, reconciled

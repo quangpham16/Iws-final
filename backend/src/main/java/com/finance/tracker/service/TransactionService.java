@@ -4,10 +4,9 @@ import com.finance.tracker.dto.TransactionDTO;
 import com.finance.tracker.exception.ResourceNotFoundException;
 import com.finance.tracker.mapper.TransactionMapper;
 import com.finance.tracker.model.Transaction;
-import com.finance.tracker.model.Transaction.TransactionType;
 import com.finance.tracker.model.Wallet;
-import com.finance.tracker.repository.TransactionRepository;
 import com.finance.tracker.repository.WalletRepository;
+import com.finance.tracker.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,15 +44,8 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public List<TransactionDTO> findByType(TransactionType type) {
-        return transactionRepository.findByType(type).stream()
-                .map(transactionMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<TransactionDTO> findByCategory(String category) {
-        return transactionRepository.findByCategory(category).stream()
+    public List<TransactionDTO> findByCategoryId(Long categoryId) {
+        return transactionRepository.findByCategoryId(categoryId).stream()
                 .map(transactionMapper::toDTO)
                 .collect(Collectors.toList());
     }
@@ -65,24 +57,14 @@ public class TransactionService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public List<TransactionDTO> search(String keyword) {
-        return transactionRepository.findByTitleContainingIgnoreCase(keyword).stream()
-                .map(transactionMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
     // ── Summary ───────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public Map<String, BigDecimal> getSummary(Long userId) {
-        BigDecimal income  = Objects.requireNonNullElse(transactionRepository.sumIncome(userId), BigDecimal.ZERO);
-        BigDecimal expense = Objects.requireNonNullElse(transactionRepository.sumExpense(userId), BigDecimal.ZERO);
-        BigDecimal balance = income.subtract(expense);
+        BigDecimal total = Objects.requireNonNullElse(transactionRepository.sumTotalByUserId(userId), BigDecimal.ZERO);
         return Map.of(
-                "totalIncome",  income,
-                "totalExpense", expense,
-                "balance",      balance
+                "total", total,
+                "count", BigDecimal.valueOf(transactionRepository.findByUserId(userId).size())
         );
     }
 
@@ -91,89 +73,57 @@ public class TransactionService {
     public TransactionDTO create(Long userId, TransactionDTO dto) {
         Transaction entity = transactionMapper.toEntity(dto);
         entity.setUserId(userId);
+        entity.setCreatedAt(java.time.LocalDateTime.now());
+        entity.setUpdatedAt(java.time.LocalDateTime.now());
         Transaction saved = transactionRepository.save(entity);
-
-        // Adjust wallet balance
-        if (saved.getWalletId() != null) {
-            Wallet wallet = walletRepository.findById(saved.getWalletId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Wallet", saved.getWalletId()));
-            if (saved.getType() == TransactionType.INCOME) {
-                wallet.setBalance(wallet.getBalance().add(saved.getAmount()));
-            } else {
-                wallet.setBalance(wallet.getBalance().subtract(saved.getAmount()));
-            }
-            walletRepository.save(wallet);
-        }
-
+        recalculateWalletBalance(saved.getWalletId());
         return transactionMapper.toDTO(saved);
     }
 
     public TransactionDTO update(Long id, TransactionDTO updatedDto) {
         Transaction existing = transactionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction", id));
+        Long oldWalletId = existing.getWalletId();
         
-        // Reverse old wallet balance
-        if (existing.getWalletId() != null) {
-            Wallet oldWallet = walletRepository.findById(existing.getWalletId())
-                    .orElse(null);
-            if (oldWallet != null) {
-                if (existing.getType() == TransactionType.INCOME) {
-                    oldWallet.setBalance(oldWallet.getBalance().subtract(existing.getAmount()));
-                } else {
-                    oldWallet.setBalance(oldWallet.getBalance().add(existing.getAmount()));
-                }
-                walletRepository.save(oldWallet);
-            }
-        }
-
-        existing.setTitle(updatedDto.getTitle());
         existing.setAmount(updatedDto.getAmount());
-        existing.setType(updatedDto.getType());
-        existing.setCategory(updatedDto.getCategory());
+        existing.setCurrencyCode(updatedDto.getCurrencyCode());
+        existing.setCategoryId(updatedDto.getCategoryId());
         existing.setDate(updatedDto.getDate());
-        existing.setTime(updatedDto.getTime());
         existing.setNote(updatedDto.getNote());
         existing.setWalletId(updatedDto.getWalletId());
+        existing.setPayeeId(updatedDto.getPayeeId());
+        existing.setTagIds(updatedDto.getTagIds());
         if (updatedDto.getStatus() != null) {
             existing.setStatus(updatedDto.getStatus());
         }
         existing.setUpdatedAt(java.time.LocalDateTime.now());
         
         Transaction saved = transactionRepository.save(existing);
-
-        // Apply new wallet balance
-        if (saved.getWalletId() != null) {
-            Wallet newWallet = walletRepository.findById(saved.getWalletId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Wallet", saved.getWalletId()));
-            if (saved.getType() == TransactionType.INCOME) {
-                newWallet.setBalance(newWallet.getBalance().add(saved.getAmount()));
-            } else {
-                newWallet.setBalance(newWallet.getBalance().subtract(saved.getAmount()));
-            }
-            walletRepository.save(newWallet);
+        recalculateWalletBalance(oldWalletId);
+        if (!Objects.equals(oldWalletId, updatedDto.getWalletId())) {
+            recalculateWalletBalance(updatedDto.getWalletId());
         }
-
         return transactionMapper.toDTO(saved);
     }
 
     public void delete(Long id) {
         Transaction existing = transactionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction", id));
-
-        // Reverse wallet balance before deleting
-        if (existing.getWalletId() != null) {
-            Wallet wallet = walletRepository.findById(existing.getWalletId())
-                    .orElse(null);
-            if (wallet != null) {
-                if (existing.getType() == TransactionType.INCOME) {
-                    wallet.setBalance(wallet.getBalance().subtract(existing.getAmount()));
-                } else {
-                    wallet.setBalance(wallet.getBalance().add(existing.getAmount()));
-                }
-                walletRepository.save(wallet);
-            }
-        }
-
+        Long walletId = existing.getWalletId();
         transactionRepository.deleteById(id);
+        recalculateWalletBalance(walletId);
+    }
+
+    // ── Wallet balance recalculation ───────────────────────────────────────────
+
+    private void recalculateWalletBalance(Long walletId) {
+        if (walletId == null) return;
+        Wallet wallet = walletRepository.findById(walletId).orElse(null);
+        if (wallet == null) return;
+        BigDecimal initial = Objects.requireNonNullElse(wallet.getInitialBalance(), BigDecimal.ZERO);
+        BigDecimal txnSum = transactionRepository.sumByWalletId(walletId);
+        wallet.setCurrentBalance(initial.add(txnSum));
+        wallet.setUpdatedAt(java.time.LocalDateTime.now());
+        walletRepository.save(wallet);
     }
 }

@@ -135,27 +135,42 @@ export default function SubscriptionsPanel() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
+            {/* Header with Stats */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
+                        <RefreshCcw size={24} className="text-violet-600" />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-black text-gray-900">Subscriptions</h2>
+                        <p className="text-xs text-gray-400 font-medium">
+                            {subscriptions.filter(s => s.status === 'active').length} active · ${monthlyTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/mo
+                        </p>
+                    </div>
+                </div>
+                <button onClick={() => openForm()}
+                    className="flex items-center gap-2 bg-[#106E4E] hover:bg-[#0d593f] text-white px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-emerald-100 active:scale-95">
+                    <Plus size={18} /> Add Subscription
+                </button>
+            </div>
 
-            {/* Summary Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Monthly Cost</p>
-                    <p className="text-3xl font-black text-gray-900 tabular-nums">
-                        ${monthlyTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {/* Summary Stats */}
+            <div className="grid grid-cols-3 gap-4">
+                <div className="bg-white rounded-2xl border border-gray-100 p-4">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Monthly</p>
+                    <p className="text-2xl font-black text-gray-900">
+                        ${monthlyTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </p>
                 </div>
-                <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Yearly Cost</p>
-                    <p className="text-3xl font-black text-gray-900 tabular-nums">
-                        ${yearlyTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <div className="bg-white rounded-2xl border border-gray-100 p-4">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Yearly</p>
+                    <p className="text-2xl font-black text-gray-900">
+                        ${yearlyTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </p>
                 </div>
-                <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Active Services</p>
-                    <p className="text-3xl font-black text-gray-900">
-                        {subscriptions.filter(s => s.status === 'active').length}
-                        <span className="text-sm font-bold text-gray-400 ml-2">/ {subscriptions.length} total</span>
-                    </p>
+                <div className="bg-white rounded-2xl border border-gray-100 p-4">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total</p>
+                    <p className="text-2xl font-black text-gray-900">{subscriptions.length}</p>
                 </div>
             </div>
 

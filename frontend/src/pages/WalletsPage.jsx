@@ -18,7 +18,7 @@ export default function WalletsPage() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingWallet, setEditingWallet] = useState(null);
-    const [formData, setFormData] = useState({ name: '', balance: '', currency: 'USD', note: '' });
+    const [formData, setFormData] = useState({ name: '', type: 'checking', initialBalance: '', currencyCode: 'VND', institutionName: '' });
 
     useEffect(() => {
         fetchWallets();
@@ -40,13 +40,14 @@ export default function WalletsPage() {
             setEditingWallet(wallet);
             setFormData({ 
                 name: wallet.name, 
-                balance: wallet.balance, 
-                currency: wallet.currency, 
-                note: wallet.note || '' 
+                type: wallet.type || 'checking', 
+                initialBalance: wallet.initialBalance || '', 
+                currencyCode: wallet.currencyCode || 'VND', 
+                institutionName: wallet.institutionName || '' 
             });
         } else {
             setEditingWallet(null);
-            setFormData({ name: '', balance: '', currency: 'USD', note: '' });
+            setFormData({ name: '', type: 'checking', initialBalance: '', currencyCode: 'VND', institutionName: '' });
         }
         setIsModalOpen(true);
     };
@@ -77,7 +78,7 @@ export default function WalletsPage() {
         }
     };
 
-    const totalBalance = wallets.reduce((sum, w) => sum + (parseFloat(w.balance) || 0), 0);
+    const totalBalance = wallets.reduce((sum, w) => sum + (parseFloat(w.currentBalance ?? w.initialBalance) || 0), 0);
 
     if (loading) return (
         <div className="flex items-center justify-center h-full">
@@ -98,7 +99,7 @@ export default function WalletsPage() {
                 <div className="flex gap-4">
                     <div className="flex flex-col items-end">
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Liquidity</p>
-                        <h2 className="text-2xl font-black text-gray-900 tabular-nums">${totalBalance.toLocaleString()}</h2>
+                        <h2 className="text-2xl font-black text-gray-900 tabular-nums">₫{totalBalance.toLocaleString()}</h2>
                     </div>
                     <button 
                         onClick={() => handleOpenModal()}
@@ -151,12 +152,12 @@ export default function WalletsPage() {
 
                                 <div>
                                     <h3 className="text-2xl font-black tracking-tight">{wallet.name}</h3>
-                                    <p className={`text-xs font-bold uppercase tracking-widest mt-1 ${textMuted}`}>{wallet.currency} • Active</p>
+                                    <p className={`text-xs font-bold uppercase tracking-widest mt-1 ${textMuted}`}>{wallet.currencyCode || 'VND'} • {wallet.type || 'checking'}</p>
                                 </div>
 
                                 <div className={`mt-10 pt-6 border-t ${borderClass}`}>
                                     <p className={`text-[10px] font-bold uppercase tracking-[0.2em] mb-2 ${textMuted}`}>Available Balance</p>
-                                    <h4 className="text-4xl font-black tabular-nums">${wallet.balance.toLocaleString()}</h4>
+                                    <h4 className="text-4xl font-black tabular-nums">₫{(wallet.currentBalance ?? wallet.initialBalance ?? 0).toLocaleString()}</h4>
                                 </div>
                             </div>
                         </div>
@@ -204,32 +205,36 @@ export default function WalletsPage() {
                                     <input 
                                         type="number" 
                                         required
-                                        value={formData.balance}
-                                        onChange={(e) => setFormData({...formData, balance: e.target.value})}
-                                        placeholder="0.00" 
+                                        value={formData.initialBalance}
+                                        onChange={(e) => setFormData({...formData, initialBalance: e.target.value})}
+                                        placeholder="0" 
                                         className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 tabular-nums focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all placeholder:text-gray-300 placeholder:font-medium"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Currency</label>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Type</label>
                                     <select 
-                                        value={formData.currency}
-                                        onChange={(e) => setFormData({...formData, currency: e.target.value})}
+                                        value={formData.type}
+                                        onChange={(e) => setFormData({...formData, type: e.target.value})}
                                         className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all appearance-none"
                                     >
-                                        <option value="USD">USD ($)</option>
-                                        <option value="EUR">EUR (€)</option>
-                                        <option value="VND">VND (đ)</option>
+                                        <option value="checking">Checking</option>
+                                        <option value="savings">Savings</option>
+                                        <option value="credit_card">Credit Card</option>
+                                        <option value="ewallet">E-Wallet</option>
+                                        <option value="investment">Investment</option>
+                                        <option value="cash">Cash</option>
                                     </select>
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Notes</label>
-                                <textarea 
-                                    value={formData.note}
-                                    onChange={(e) => setFormData({...formData, note: e.target.value})}
-                                    placeholder="Add context..." 
-                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-medium text-sm text-gray-900 focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all h-24 resize-none placeholder:text-gray-300"
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Institution</label>
+                                <input 
+                                    type="text"
+                                    value={formData.institutionName}
+                                    onChange={(e) => setFormData({...formData, institutionName: e.target.value})}
+                                    placeholder="e.g. Techcombank" 
+                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-[#106E4E]/10 focus:border-[#106E4E] outline-none transition-all placeholder:text-gray-300 placeholder:font-medium"
                                 />
                             </div>
                             <button className="w-full py-5 bg-[#106E4E] text-white font-black rounded-2xl hover:bg-[#0d593f] transition-all shadow-xl shadow-[#106E4E]/20 mt-4">

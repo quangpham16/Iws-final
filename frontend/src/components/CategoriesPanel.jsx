@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Tag, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Trash2, Tag, ArrowUpRight, ArrowDownRight, Edit2, X } from 'lucide-react';
 import { categoryApi } from '../services/api';
+import ColorPicker from './ColorPicker';
 
 export default function CategoriesPanel() {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [showAdd, setShowAdd] = useState(false);
-    const [newCat, setNewCat] = useState({ name: '', type: 'expense', colorHex: '#ef4444' });
+    const [showModal, setShowModal] = useState(false);
+    const [editingCat, setEditingCat] = useState(null);
+    const [formData, setFormData] = useState({ name: '', type: 'expense', colorHex: '#ef4444' });
+    const [showColorPicker, setShowColorPicker] = useState(false);
+    const colorPickerRef = useRef(null);
 
     useEffect(() => { fetchCategories(); }, []);
 
@@ -16,12 +20,55 @@ export default function CategoriesPanel() {
         finally { setLoading(false); }
     };
 
-    const handleAdd = async (e) => {
+    const openAdd = () => {
+        setEditingCat(null);
+        setFormData({ name: '', type: 'expense', colorHex: '#ef4444' });
+        setShowModal(true);
+    };
+
+    const openEdit = (cat) => {
+        setEditingCat(cat);
+        setFormData({ name: cat.name, type: cat.type, colorHex: cat.colorHex });
+        setShowModal(true);
+    };
+
+    const closeModal = () => {
+        setShowModal(false);
+        setEditingCat(null);
+        setFormData({ name: '', type: 'expense', colorHex: '#ef4444' });
+        setShowColorPicker(false);
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!formData.type) {
+            alert('Please select a type (Expense or Income)');
+            return;
+        }
         try {
-            await categoryApi.create(newCat);
-            setShowAdd(false);
-            setNewCat({ name: '', type: 'expense', colorHex: '#ef4444' });
+            const dataToSend = {
+                name: formData.name,
+                type: formData.type.toLowerCase(),
+                colorHex: formData.colorHex
+            };
+            if (editingCat) {
+                await categoryApi.update(editingCat.id, dataToSend);
+            } else {
+                await categoryApi.create(dataToSend);
+            }
+            window.__showSuccessToast?.(editingCat ? 'Category updated successfully' : 'Category created successfully');
+            closeModal();
+            fetchCategories();
+        } catch (err) { 
+            console.error(err);
+            window.__showErrorToast?.(err.response?.data?.message || 'Failed to save category');
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm('Delete this category?')) return;
+        try {
+            await categoryApi.delete(id);
             fetchCategories();
         } catch (err) { console.error(err); }
     };
@@ -35,29 +82,40 @@ export default function CategoriesPanel() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex items-center justify-between">
-                <p className="text-sm font-bold text-gray-400">Organize your spending and income</p>
-                <button onClick={() => setShowAdd(true)}
-                    className="flex items-center gap-2 bg-gray-900 hover:bg-[#106E4E] text-white px-5 py-3 rounded-2xl font-black text-sm transition-all shadow-lg active:scale-95">
-                    <Plus size={16} /> New Category
+                <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                        <Tag size={24} className="text-[#106E4E]" />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-black text-gray-900">Categories</h2>
+                        <p className="text-xs text-gray-400 font-medium">{categories.length} total</p>
+                    </div>
+                </div>
+                <button onClick={openAdd}
+                    className="flex items-center gap-2 bg-[#106E4E] hover:bg-[#0d593f] text-white px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-emerald-100 active:scale-95">
+                    <Plus size={18} /> Add New
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {categories.map((cat) => (
-                    <div key={cat.id} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm group hover:shadow-xl transition-all">
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg"
+                    <div key={cat.id} className="group bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:border-emerald-200 transition-all cursor-pointer"
+                        onClick={() => openEdit(cat)}>
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-md flex-shrink-0"
                                 style={{ backgroundColor: cat.colorHex }}>
-                                <Tag size={24} />
+                                <Tag size={22} />
                             </div>
-                            <div className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-widest ${cat.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                {cat.type === 'income' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                                {cat.type}
+                            <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-gray-900 truncate">{cat.name}</h3>
+                                <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full mt-1 ${cat.type === 'income' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                    {cat.type === 'income' ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
+                                    {cat.type}
+                                </span>
                             </div>
-                        </div>
-                        <h3 className="text-lg font-black text-gray-900 mb-6">{cat.name}</h3>
-                        <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button className="p-2 text-gray-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all">
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); handleDelete(cat.id); }}
+                                className="p-2 text-gray-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100">
                                 <Trash2 size={18} />
                             </button>
                         </div>
@@ -65,40 +123,61 @@ export default function CategoriesPanel() {
                 ))}
             </div>
 
-            {showAdd && (
+            {showModal && (
                 <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
                     <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-300">
-                        <h2 className="text-2xl font-black text-gray-900 mb-8">New Category</h2>
-                        <form onSubmit={handleAdd} className="space-y-6">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-2xl font-black text-gray-900">{editingCat ? 'Edit Category' : 'New Category'}</h2>
+                            <button onClick={closeModal} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="flex bg-gray-50 p-1 rounded-2xl">
-                                <button type="button" onClick={() => setNewCat({...newCat, type: 'expense'})}
-                                    className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${newCat.type === 'expense' ? 'bg-white text-rose-500 shadow-sm' : 'text-gray-400'}`}>
+                                <button type="button" onClick={() => setFormData({...formData, type: 'expense'})}
+                                    className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${formData.type === 'expense' ? 'bg-white text-rose-500 shadow-sm' : 'text-gray-400'}`}>
                                     Expense
                                 </button>
-                                <button type="button" onClick={() => setNewCat({...newCat, type: 'income'})}
-                                    className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${newCat.type === 'income' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-400'}`}>
+                                <button type="button" onClick={() => setFormData({...formData, type: 'income'})}
+                                    className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${formData.type === 'income' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-400'}`}>
                                     Income
                                 </button>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Name</label>
-                                <input type="text" required value={newCat.name} onChange={e => setNewCat({...newCat, name: e.target.value})}
+                                <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
                                     className="w-full bg-gray-50 border-none px-6 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#106E4E]/20 font-bold text-gray-700"
                                     placeholder="e.g. Health, Travel, Salary" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Color</label>
-                                <div className="flex flex-wrap gap-2">
-                                    {['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#64748b', '#000000'].map(color => (
-                                        <button key={color} type="button" onClick={() => setNewCat({...newCat, colorHex: color})}
-                                            className={`w-8 h-8 rounded-full transition-all ${newCat.colorHex === color ? 'ring-4 ring-gray-100 scale-110' : 'hover:scale-105'}`}
-                                            style={{ backgroundColor: color }} />
-                                    ))}
+                                <div className="flex items-center gap-3 relative">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowColorPicker(!showColorPicker)}
+                                        className="w-12 h-12 rounded-xl border-2 border-gray-200 hover:border-[#106E4E] transition-all shadow-sm"
+                                        style={{ backgroundColor: formData.colorHex }}
+                                    />
+                                    <span className="text-sm font-mono font-bold text-gray-500 uppercase">{formData.colorHex}</span>
+                                    {showColorPicker && (
+                                        <div className="absolute left-full top-0 ml-3 z-50" ref={colorPickerRef}>
+                                            <ColorPicker 
+                                                color={formData.colorHex} 
+                                                onChange={(color) => {
+                                                    setFormData({...formData, colorHex: color});
+                                                    setShowColorPicker(false);
+                                                }}
+                                                onClose={() => setShowColorPicker(false)}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex gap-4 pt-4">
-                                <button type="button" onClick={() => setShowAdd(false)} className="flex-1 py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-2xl transition-all">Cancel</button>
-                                <button type="submit" className="flex-1 py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-[#106E4E] transition-all shadow-lg">Save</button>
+                                <button type="button" onClick={closeModal} className="flex-1 py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-2xl transition-all">Cancel</button>
+                                <button type="submit" className="flex-1 py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-[#106E4E] transition-all shadow-lg">
+                                    {editingCat ? 'Update' : 'Save'}
+                                </button>
                             </div>
                         </form>
                     </div>

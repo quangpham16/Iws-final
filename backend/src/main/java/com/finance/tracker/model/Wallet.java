@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "wallets")
+@Table(name = "accounts")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,25 +19,43 @@ public class Wallet {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "account_id")
     private Long id;
-
-    @NotBlank(message = "Name is required")
-    @Column(nullable = false)
-    private String name;
-
-    @NotNull(message = "Balance is required")
-    @Column(nullable = false, precision = 15, scale = 2)
-    private BigDecimal balance;
-
-    @Column(name = "currency", nullable = false) // Bạn có thể bỏ nullable = false nếu không bắt buộc
-    private String currency;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
+
+    @NotBlank(message = "Name is required")
+    @Column(name = "name", nullable = false, length = 100)
+    private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private AccountType type;
+
+    @Column(name = "currency_code", length = 3)
+    private String currencyCode;
+
+    @Column(name = "initial_balance", precision = 15, scale = 2)
+    private BigDecimal initialBalance;
+
+    @Column(name = "current_balance", precision = 15, scale = 2)
+    private BigDecimal currentBalance;
+
+    @Column(name = "institution_name", length = 100)
+    private String institutionName;
+
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(length = 500)
-    private String note;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    public enum AccountType {
+        checking, savings, credit_card, ewallet, investment, cash, other
+    }
 
 }

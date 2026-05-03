@@ -41,13 +41,13 @@ public class SubscriptionService {
         subscription.setName(dto.getName());
         subscription.setEstimatedAmount(dto.getEstimatedAmount());
         if (dto.getCurrencyCode() != null) subscription.setCurrencyCode(dto.getCurrencyCode());
-        if (dto.getFrequency() != null) subscription.setFrequency(Subscription.Frequency.valueOf(dto.getFrequency()));
+        if (dto.getFrequency() != null) subscription.setFrequency(dto.getFrequency());
         subscription.setNextDueDate(dto.getNextDueDate());
         subscription.setTrialEndDate(dto.getTrialEndDate());
         subscription.setCategory(dto.getCategory());
         if (dto.getReminderDays() != null) subscription.setReminderDays(dto.getReminderDays());
         subscription.setNote(dto.getNote());
-        if (dto.getStatus() != null) subscription.setStatus(Subscription.SubscriptionStatus.valueOf(dto.getStatus()));
+        if (dto.getStatus() != null) subscription.setStatus(dto.getStatus());
         return subscriptionMapper.toDTO(subscriptionRepository.save(subscription));
     }
 

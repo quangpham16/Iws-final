@@ -8,35 +8,35 @@ import org.springframework.stereotype.Component;
 public class SavingGoalMapper {
     public SavingGoalDTO toDTO(SavingGoal goal) {
         if (goal == null) return null;
-        SavingGoalDTO dto = new SavingGoalDTO();
-        dto.setId(goal.getId());
-        dto.setName(goal.getName());
-        dto.setDescription(goal.getDescription());
-        dto.setTargetAmount(goal.getTargetAmount());
-        dto.setCurrentAmount(goal.getCurrentAmount());
-        dto.setCurrencyCode(goal.getCurrencyCode());
-        dto.setTargetDate(goal.getTargetDate());
-        dto.setIcon(goal.getIcon());
-        dto.setColorHex(goal.getColorHex());
-        dto.setStatus(goal.getStatus() != null ? goal.getStatus().name() : null);
-        dto.setCreatedAt(goal.getCreatedAt());
-        return dto;
+        return SavingGoalDTO.builder()
+                .id(goal.getId())
+                .userId(goal.getUserId())
+                .name(goal.getName())
+                .description(goal.getDescription())
+                .targetAmount(goal.getTargetAmount())
+                .currentAmount(goal.getCurrentAmount())
+                .currencyCode(goal.getCurrencyCode())
+                .targetDate(goal.getTargetDate())
+                .icon(goal.getIcon())
+                .colorHex(goal.getColorHex())
+                .status(goal.getStatus())
+                .createdAt(goal.getCreatedAt())
+                .build();
     }
 
     public SavingGoal toEntity(SavingGoalDTO dto) {
         if (dto == null) return null;
-        SavingGoal goal = new SavingGoal();
-        goal.setName(dto.getName());
-        goal.setDescription(dto.getDescription());
-        goal.setTargetAmount(dto.getTargetAmount());
-        goal.setCurrentAmount(dto.getCurrentAmount());
-        goal.setCurrencyCode(dto.getCurrencyCode());
-        goal.setTargetDate(dto.getTargetDate());
-        goal.setIcon(dto.getIcon());
-        goal.setColorHex(dto.getColorHex());
-        if (dto.getStatus() != null) {
-            goal.setStatus(SavingGoal.GoalStatus.valueOf(dto.getStatus()));
-        }
-        return goal;
+        return SavingGoal.builder()
+                .userId(dto.getUserId())
+                .name(dto.getName())
+                .description(dto.getDescription())
+                .targetAmount(dto.getTargetAmount())
+                .currentAmount(dto.getCurrentAmount() != null ? dto.getCurrentAmount() : java.math.BigDecimal.ZERO)
+                .currencyCode(dto.getCurrencyCode() != null ? dto.getCurrencyCode() : "VND")
+                .targetDate(dto.getTargetDate())
+                .icon(dto.getIcon())
+                .colorHex(dto.getColorHex())
+                .status(dto.getStatus() != null ? dto.getStatus() : SavingGoal.GoalStatus.active)
+                .build();
     }
 }
