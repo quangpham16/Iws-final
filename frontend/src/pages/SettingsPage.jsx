@@ -637,28 +637,28 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto w-full animate-in fade-in duration-700">
+        <div className="space-y-6 max-w-[1200px] mx-auto w-full animate-in fade-in duration-700 pb-12">
             {/* Alerts */}
             {/* Toast Notifications - Fixed Overlay */}
             {error && (
-                <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top fade-in duration-300">
-                    <div className="flex items-center gap-3 px-6 py-4 bg-rose-500 text-white rounded-2xl shadow-2xl font-semibold">
-                        <AlertCircle size={20} />
-                        {error}
+                <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-4 fade-in duration-300 w-[90%] max-w-md">
+                    <div className="flex items-center gap-3 px-6 py-4 bg-rose-500 text-white rounded-2xl shadow-2xl font-semibold border border-rose-400">
+                        <AlertCircle size={20} className="shrink-0" />
+                        <span className="text-sm">{error}</span>
                     </div>
                 </div>
             )}
             {success && (
-                <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top fade-in duration-300">
-                    <div className="flex items-center gap-3 px-6 py-4 bg-[#106E4E] text-white rounded-2xl shadow-2xl font-semibold">
-                        <Check size={20} />
-                        {success}
+                <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-4 fade-in duration-300 w-[90%] max-w-md">
+                    <div className="flex items-center gap-3 px-6 py-4 bg-[#106E4E] text-white rounded-2xl shadow-2xl font-semibold border border-emerald-400">
+                        <Check size={20} className="shrink-0" />
+                        <span className="text-sm">{success}</span>
                     </div>
                 </div>
             )}
 
             {/* Content */}
-            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 lg:p-10">
+            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-5 sm:p-8 lg:p-10">
                 {renderContent()}
             </div>
         </div>

@@ -1,6 +1,8 @@
 package com.finance.tracker.dto;
 
 import com.finance.tracker.model.Wallet.AccountType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,8 +18,13 @@ import java.time.LocalDateTime;
 public class WalletDTO {
     private Long id;
     private Long userId;
+    
+    @NotBlank(message = "Name is required")
     private String name;
+    
+    @NotNull(message = "Type is required")
     private AccountType type;
+    
     private String currencyCode;
     private BigDecimal initialBalance;
     private BigDecimal currentBalance;

@@ -7,7 +7,6 @@ import {
     BarChart3,
     Settings,
     LogOut,
-    Bell,
     Tag,
     Target,
     Trophy,
@@ -22,8 +21,9 @@ import {
     Mail,
     Phone,
     MapPin,
-    Search,
-    User
+    User,
+    Menu,
+    X
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { userApi } from '../services/userService';
@@ -231,6 +231,8 @@ export default function Layout({ children }) {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')) || { fullName: 'Guest', email: '' });
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -309,16 +311,36 @@ export default function Layout({ children }) {
     };
 
     return (
-        <div className="flex min-h-screen bg-[#F8FAFC]">
-            <aside className="w-64 bg-white/70 backdrop-blur-xl border-r border-slate-200/50 flex flex-col sticky top-0 h-screen z-40">
-                <div className="p-6 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
-                        <div className="w-4 h-4 bg-white rounded-full animate-pulse" />
+        <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
+            {/* Mobile Backdrop */}
+            {mobileSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-30 md:hidden"
+                    onClick={() => setMobileSidebarOpen(false)}
+                />
+            )}
+
+            {/* Main Sidebar */}
+            <aside className={cn(
+                "w-64 bg-white/70 backdrop-blur-xl border-r border-slate-200/50 flex flex-col sticky top-0 h-screen z-40 transition-transform duration-300 md:translate-x-0",
+                mobileSidebarOpen ? "translate-x-0 fixed" : "-translate-x-full fixed md:relative md:translate-x-0"
+            )}>
+                <div className="p-6 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
+                            <div className="w-4 h-4 bg-white rounded-full animate-pulse" />
+                        </div>
+                        <span className="font-bold text-xl text-slate-800 tracking-tight hidden sm:inline">Verdant</span>
                     </div>
-                    <span className="font-bold text-xl text-slate-800 tracking-tight">Verdant</span>
+                    <button
+                        onClick={() => setMobileSidebarOpen(false)}
+                        className="md:hidden p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                    >
+                        <X size={20} className="text-slate-400" />
+                    </button>
                 </div>
 
-                <nav className="flex-1 px-4 space-y-1 mt-4">
+                <nav className="flex-1 px-4 space-y-1 mt-4 overflow-y-auto">
                     {sidebarItems.map((item) => {
                         const isActive = location.pathname === item.path;
                         const isSettings = item.path === '/settings';
@@ -331,21 +353,22 @@ export default function Layout({ children }) {
                                     if (item.path === '/transactions') {
                                         setSearchParams({ tab: 'transactions' });
                                     }
+                                    setMobileSidebarOpen(false);
                                 }}
                                 className={cn(
-                                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+                                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-sm",
                                     isActive
                                         ? "bg-emerald-50 text-emerald-700 font-semibold shadow-sm"
                                         : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                                 )}
                             >
                                 <item.icon size={20} className={cn(
-                                    "transition-colors",
+                                    "transition-colors flex-shrink-0",
                                     isActive ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600"
                                 )} />
                                 <span className="flex-1">{item.label}</span>
                                 {(isSettings && isSettingsPage) || (isTransactionsItem && isTransactions) ? (
-                                    <ChevronRight size={16} className="text-emerald-600" />
+                                    <ChevronRight size={16} className="text-emerald-600 flex-shrink-0" />
                                 ) : null}
                             </Link>
                         );
@@ -355,20 +378,23 @@ export default function Layout({ children }) {
                 <div className="p-4 border-t border-slate-100">
                     <button
                         onClick={handleLogout}
-                        className="flex items-center gap-3 px-4 py-3 w-full text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all group"
+                        className="flex items-center gap-3 px-4 py-3 w-full text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all group text-sm"
                     >
-                        <LogOut size={20} className="text-slate-400 group-hover:text-rose-500" />
+                        <LogOut size={20} className="text-slate-400 group-hover:text-rose-500 flex-shrink-0" />
                         <span className="font-medium">Logout</span>
                     </button>
                 </div>
             </aside>
 
+            {/* Settings Sidebar */}
             {isSettingsPage && (
-                <aside className="w-56 bg-slate-50/70 backdrop-blur-xl border-r border-slate-200/50 flex flex-col sticky top-0 h-screen animate-in slide-in-from-left duration-300 z-30">
+                <aside className={cn(
+                    "w-56 bg-slate-50/70 backdrop-blur-xl border-r border-slate-200/50 flex flex-col sticky top-0 h-screen z-30 hidden lg:flex"
+                )}>
                     <div className="p-5 border-b border-slate-200/60">
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Settings</p>
                     </div>
-                    <nav className="flex-1 p-3 pt-11 space-y-1">
+                    <nav className="flex-1 p-3 pt-11 space-y-1 overflow-y-auto">
                         {settingsTabs.map((tab) => {
                             const isActive = activeSettingsTab === tab.id;
                             const Icon = tab.icon;
@@ -377,14 +403,14 @@ export default function Layout({ children }) {
                                     key={tab.id}
                                     onClick={() => handleSettingsTabClick(tab.id)}
                                     className={cn(
-                                        "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left",
+                                        "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left text-sm",
                                         isActive
                                             ? "bg-white text-emerald-700 font-semibold shadow-sm border border-slate-200"
                                             : "text-slate-500 hover:bg-white/60 hover:text-slate-700"
                                     )}
                                 >
                                     <Icon size={18} className={cn(
-                                        "transition-colors",
+                                        "transition-colors flex-shrink-0",
                                         isActive ? "text-emerald-600" : "text-slate-400"
                                     )} />
                                     {tab.label}
@@ -395,12 +421,15 @@ export default function Layout({ children }) {
                 </aside>
             )}
 
+            {/* Transactions Sidebar */}
             {isTransactions && (
-                <aside className="w-56 bg-slate-50/70 backdrop-blur-xl border-r border-slate-200/50 flex flex-col sticky top-0 h-screen animate-in slide-in-from-left duration-300 z-30">
+                <aside className={cn(
+                    "w-56 bg-slate-50/70 backdrop-blur-xl border-r border-slate-200/50 flex flex-col sticky top-0 h-screen z-30 hidden lg:flex"
+                )}>
                     <div className="p-5 border-b border-slate-200/60">
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Manage</p>
                     </div>
-                    <nav className="flex-1 p-3 pt-11 space-y-1">
+                    <nav className="flex-1 p-3 pt-11 space-y-1 overflow-y-auto">
                         {transactionTabs.map((tab) => {
                             const isActive = activeTab === tab.id;
                             const Icon = tab.icon;
@@ -409,14 +438,14 @@ export default function Layout({ children }) {
                                     key={tab.id}
                                     onClick={() => handleTransactionTabClick(tab.id)}
                                     className={cn(
-                                        "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left",
+                                        "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left text-sm",
                                         isActive
                                             ? "bg-white text-emerald-700 font-semibold shadow-sm border border-slate-200"
                                             : "text-slate-500 hover:bg-white/60 hover:text-slate-700"
                                     )}
                                 >
                                     <Icon size={18} className={cn(
-                                        "transition-colors",
+                                        "transition-colors flex-shrink-0",
                                         isActive ? "text-emerald-600" : "text-slate-400"
                                     )} />
                                     {tab.label}
@@ -427,39 +456,91 @@ export default function Layout({ children }) {
                 </aside>
             )}
 
-            <div className="flex-1 flex flex-col relative">
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col relative w-full">
+                {/* Responsive Header */}
                 <header className={cn(
-                    "h-20 bg-white/70 backdrop-blur-xl border-b border-slate-200/50 px-8 flex items-center justify-between fixed top-0 right-0 z-50 transition-all duration-300",
-                    (isSettingsPage || isTransactions) ? "left-[30rem]" : "left-64"
+                    "h-16 sm:h-20 bg-white/70 backdrop-blur-xl border-b border-slate-200/50 px-4 sm:px-6 lg:px-8 flex items-center justify-between fixed top-0 right-0 z-50 w-full lg:w-[calc(100%-16rem)]",
+                    isSettingsPage && "xl:w-[calc(100%-16rem-14rem)]",
+                    isTransactions && "xl:w-[calc(100%-16rem-14rem)]"
                 )}>
-                    <div className="flex items-center">
-                        <PageTitle pathname={location.pathname} hash={location.hash} />
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <button
+                            onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+                            className="md:hidden p-2 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 shadow-sm"
+                        >
+                            <Menu size={20} className="text-slate-600" />
+                        </button>
+                        <div className="hidden md:block">
+                            <PageTitle pathname={location.pathname} hash={location.hash} />
+                        </div>
+                        <div className="md:hidden">
+                             <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
+                                    <div className="w-3 h-3 bg-white rounded-full" />
+                                </div>
+                                <span className="font-bold text-lg text-slate-800 tracking-tight">Verdant</span>
+                             </div>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-3 bg-slate-100 px-4 py-2.5 rounded-2xl w-72 group focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
-                            <Search size={18} className="text-slate-400 group-focus-within:text-emerald-500" />
-                            <input
-                                type="text"
-                                placeholder="Search transactions..."
-                                className="bg-transparent border-none outline-none w-full text-sm text-slate-600 placeholder:text-slate-400"
-                            />
-                        </div>
-
-                        <div className="h-8 w-px bg-slate-200"></div>
-
-                        <button className="relative p-2.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all">
-                            <Bell size={20} />
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
-                        </button>
-
-                        <div className="h-8 w-px bg-slate-200"></div>
+                    <div className="flex items-center gap-2 sm:gap-4">
 
                         <ProfileDropdown user={user} onLogout={handleLogout} />
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto p-8 pt-28">
+                {/* Main Content */}
+                <main className="flex-1 overflow-y-auto mt-16 sm:mt-20 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+                    <div className="md:hidden mb-6">
+                        <PageTitle pathname={location.pathname} hash={location.hash} />
+                        
+                        {/* Mobile Tab Switcher for Settings */}
+                        {isSettingsPage && (
+                            <div className="flex overflow-x-auto gap-2 py-4 no-scrollbar border-b border-slate-100 mb-4 mt-2">
+                                {settingsTabs.map((tab) => {
+                                    const isActive = activeSettingsTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => handleSettingsTabClick(tab.id)}
+                                            className={cn(
+                                                "whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold transition-all",
+                                                isActive 
+                                                    ? "bg-[#106E4E] text-white shadow-md shadow-emerald-900/10" 
+                                                    : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                                            )}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* Mobile Tab Switcher for Transactions */}
+                        {isTransactions && (
+                            <div className="flex overflow-x-auto gap-2 py-4 no-scrollbar border-b border-slate-100 mb-4 mt-2">
+                                {transactionTabs.map((tab) => {
+                                    const isActive = activeTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => handleTransactionTabClick(tab.id)}
+                                            className={cn(
+                                                "whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold transition-all",
+                                                isActive 
+                                                    ? "bg-[#106E4E] text-white shadow-md shadow-emerald-900/10" 
+                                                    : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                                            )}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
                     {children}
                 </main>
             </div>

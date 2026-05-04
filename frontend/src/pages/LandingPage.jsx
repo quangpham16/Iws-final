@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   ArrowRight, 
   Cpu, 
@@ -10,10 +10,12 @@ import {
   Layout,
   BarChart3,
   Bot,
-  CheckCircle2
+  CheckCircle2,
+  Menu,
+  X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import dashboardPreview from '../assets/dashboard_preview.png';
 
 const fadeInUp = {
@@ -32,6 +34,10 @@ const staggerContainer = {
 };
 
 export default function LandingPage() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
   return (
     <div className="bg-[#F8FAFC] text-gray-900 font-sans selection:bg-emerald-100 selection:text-emerald-900">
       {/* Navigation */}
@@ -45,24 +51,62 @@ export default function LandingPage() {
               <span className="text-gray-900">Verdant</span>
             </button>
             <div className="hidden md:flex items-center gap-8 text-sm font-bold text-gray-400">
-              <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
-              <a href="#ai-section" className="hover:text-gray-900 transition-colors">AI</a>
-              <a href="#pricing" className="hover:text-gray-900 transition-colors">Pricing</a>
+              <a href="#features" className="hover:text-gray-900 transition-colors font-bold">Features</a>
+              <a href="#ai-section" className="hover:text-gray-900 transition-colors font-bold">AI</a>
+              <a href="#pricing" className="hover:text-gray-900 transition-colors font-bold">Pricing</a>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <Link to="/auth" className="text-sm font-bold text-gray-500 hover:text-emerald-700 hover:bg-emerald-50 px-4 py-2.5 rounded-xl transition-all">Log in</Link>
-            <Link to="/auth">
+            <Link to="/auth" className="hidden sm:block text-sm font-bold text-gray-500 hover:text-emerald-700 hover:bg-emerald-50 px-4 py-2.5 rounded-xl transition-all">Log in</Link>
+            <Link to="/auth" className="hidden sm:block">
               <button className="bg-verdant-dark hover:bg-[#0d665f] text-white text-sm font-bold py-2.5 px-6 rounded-xl transition-all shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/40 hover:-translate-y-1">
                 Get started
               </button>
             </Link>
+            <button 
+              onClick={toggleMenu}
+              className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </div>
       </nav>
 
+      {/* Mobile Menu Drawer */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-0 z-40 md:hidden bg-white pt-24 px-6 flex flex-col gap-8"
+          >
+            <div className="flex flex-col gap-6">
+              <a href="#features" onClick={toggleMenu} className="text-2xl font-black text-gray-900 tracking-tight">Features</a>
+              <a href="#ai-section" onClick={toggleMenu} className="text-2xl font-black text-gray-900 tracking-tight">AI Engine</a>
+              <a href="#pricing" onClick={toggleMenu} className="text-2xl font-black text-gray-900 tracking-tight">Pricing</a>
+            </div>
+            <div className="h-px bg-gray-100" />
+            <div className="flex flex-col gap-4">
+              <Link to="/auth" onClick={toggleMenu} className="w-full">
+                <button className="w-full bg-gray-50 text-gray-900 font-black py-4 rounded-2xl border border-gray-200">
+                  Log in
+                </button>
+              </Link>
+              <Link to="/auth" onClick={toggleMenu} className="w-full">
+                <button className="w-full bg-verdant-dark text-white font-black py-4 rounded-2xl shadow-xl shadow-emerald-600/20">
+                  Get started
+                </button>
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col justify-center pt-28 pb-12 bg-white">
+      <section className="relative min-h-screen flex flex-col justify-center pt-28 pb-12 bg-white overflow-hidden">
         {/* Crisp Background Image with proper contrast gradient */}
         <div className="absolute inset-0 z-0 overflow-hidden bg-white">
           <motion.img 
@@ -90,11 +134,11 @@ export default function LandingPage() {
              AI-Powered Wealth Intelligence
           </motion.div>
           
-          <motion.h1 variants={fadeInUp} className="text-5xl lg:text-7xl font-black leading-[1.05] tracking-tighter text-gray-900 mb-6 max-w-4xl mx-auto drop-shadow-sm">
+          <motion.h1 variants={fadeInUp} className="text-4xl sm:text-5xl lg:text-7xl font-black leading-[1.05] tracking-tighter text-gray-900 mb-6 max-w-4xl mx-auto drop-shadow-sm">
             The first wealth tracker <br /> <span className="text-verdant-dark">that actually thinks.</span>
           </motion.h1>
           
-          <motion.p variants={fadeInUp} className="text-lg lg:text-xl text-gray-900 font-bold mb-10 leading-relaxed max-w-2xl mx-auto drop-shadow-md">
+          <motion.p variants={fadeInUp} className="text-base sm:text-lg lg:text-xl text-gray-900 font-bold mb-10 leading-relaxed max-w-2xl mx-auto drop-shadow-md">
             Verdant is your AI financial manager. It analyzes, optimizes, and evolves your portfolio before you even have to ask.
           </motion.p>
           
@@ -175,7 +219,7 @@ export default function LandingPage() {
             className="text-center max-w-3xl mx-auto mb-16"
           >
             <div className="text-verdant-dark font-black text-[10px] uppercase tracking-[0.2em] mb-4">Engineered for Performance</div>
-            <h2 className="text-4xl lg:text-5xl font-black tracking-tighter text-gray-900 mb-4">Everything you need. <br/> Nothing you don't.</h2>
+            <h2 className="text-4xl lg:text-5xl font-black tracking-tighter text-gray-900 mb-4">Everything you need. <br className="hidden sm:block" /> Nothing you don't.</h2>
           </motion.div>
 
           <motion.div 
@@ -257,7 +301,7 @@ export default function LandingPage() {
                  transition={{ duration: 0.8, ease: "easeOut" }}
                  className="relative"
                >
-                  <div className="bg-white rounded-[2rem] border border-gray-200 shadow-2xl p-3 max-w-md ml-auto">
+                  <div className="bg-white rounded-[2rem] border border-gray-200 shadow-2xl p-3 max-w-md mx-auto lg:ml-auto">
                      <div className="bg-gray-50 rounded-[1.5rem] p-5 border border-gray-100 shadow-inner">
                         <div className="flex gap-4 mb-5">
                            <div className="w-8 h-8 rounded-full bg-white text-emerald-700 flex items-center justify-center flex-shrink-0 shadow-sm border border-gray-200">
@@ -340,7 +384,7 @@ export default function LandingPage() {
                   </div>
                </div>
                {/* Links */}
-               <div className="flex gap-20">
+               <div className="flex flex-wrap gap-12 sm:gap-20">
                   <div>
                      <h4 className="font-black text-gray-900 mb-5 text-xs uppercase tracking-widest">Product</h4>
                      <ul className="space-y-3 text-sm">
@@ -388,9 +432,9 @@ function FeatureCard({ icon, title, description }) {
 
 function PricingCard({ title, price, features, cta, highlight }) {
    return (
-      <motion.div variants={fadeInUp} className={`p-10 rounded-[2rem] border transition-all duration-300 ${highlight ? 'bg-verdant-dark text-white border-verdant-dark shadow-2xl shadow-verdant-dark/20' : 'bg-[#F8FAFC] text-gray-900 border-gray-200 shadow-sm'}`}>
+      <motion.div variants={fadeInUp} className={`p-8 sm:p-10 rounded-[2rem] border transition-all duration-300 ${highlight ? 'bg-verdant-dark text-white border-verdant-dark shadow-2xl shadow-verdant-dark/20' : 'bg-[#F8FAFC] text-gray-900 border-gray-200 shadow-sm'}`}>
          <h3 className={`text-base font-black mb-3 ${highlight ? 'text-verdant-accent' : 'text-gray-500'}`}>{title}</h3>
-         <div className="text-5xl font-black mb-8 tracking-tighter">{price}</div>
+         <div className="text-4xl sm:text-5xl font-black mb-8 tracking-tighter">{price}</div>
          <ul className="space-y-4 mb-10">
             {features.map((f, i) => (
                <li key={i} className="flex items-center gap-3 font-medium text-sm">

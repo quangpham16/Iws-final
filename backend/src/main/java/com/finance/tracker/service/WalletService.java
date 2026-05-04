@@ -55,6 +55,9 @@ public class WalletService {
     public WalletDTO create(Long userId, WalletDTO dto) {
         Wallet entity = walletMapper.toEntity(dto);
         entity.setUserId(userId);
+        if (entity.getCurrentBalance() == null) {
+            entity.setCurrentBalance(entity.getInitialBalance());
+        }
         entity.setCreatedAt(java.time.LocalDateTime.now());
         entity.setUpdatedAt(java.time.LocalDateTime.now());
         return walletMapper.toDTO(walletRepository.save(entity));

@@ -18,15 +18,27 @@ const CURRENCIES = [
     { code: 'INR', name: 'Indian Rupee', symbol: '₹', flag: '🇮🇳' },
 ];
 
+const WALLET_TYPES = [
+    { value: 'checking', label: 'Checking Account' },
+    { value: 'savings', label: ' Savings Account' },
+    { value: 'credit_card', label: 'Credit Card' },
+    { value: 'ewallet', label: 'E-Wallet' },
+    { value: 'investment', label: 'Investment' },
+    { value: 'cash', label: 'Cash' },
+    { value: 'other', label: 'Other' },
+];
+
 export default function WalletSetupPage() {
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
     const [walletName, setWalletName] = useState('My Wallet');
+    const [walletType, setWalletType] = useState('savings');
     const [currency, setCurrency] = useState('USD');
     const [balance, setBalance] = useState('');
     const [note, setNote] = useState('');
     const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
+    const [showTypeDropdown, setShowTypeDropdown] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -40,6 +52,10 @@ export default function WalletSetupPage() {
             setError('Please enter a wallet name.');
             return;
         }
+        if (!walletType) {
+            setError('Please select a wallet type.');
+            return;
+        }
         if (!balance || parseFloat(balance) < 0) {
             setError('Please enter a valid opening balance.');
             return;
@@ -47,11 +63,13 @@ export default function WalletSetupPage() {
 
         setLoading(true);
         try {
+            const balanceAmount = parseFloat(balance);
             await walletApi.create({
                 name: walletName,
-                balance: parseFloat(balance),
-                currency: currency,
-                note: note || null,
+                type: walletType,
+                currencyCode: currency,
+                initialBalance: balanceAmount,
+                currentBalance: balanceAmount,
             });
 
             // Update localStorage to mark user as having a wallet
@@ -135,7 +153,49 @@ export default function WalletSetupPage() {
                             </div>
                         </div>
 
-                        {/* Currency Selection */}
+                        {/* Wallet Type */}
+                        <div>
+                            <label className="block text-xs font-bold text-emerald-300/60 uppercase tracking-widest mb-3">
+                                Wallet Type
+                            </label>
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowTypeDropdown(!showTypeDropdown)}
+                                    className="w-full flex items-center justify-between px-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white hover:bg-white/10 focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-lg">{WALLET_TYPES.find(t => t.value === walletType)?.label?.split(' ')[0]}</span>
+                                        <p className="text-sm">{WALLET_TYPES.find(t => t.value === walletType)?.label?.split(' ').slice(1).join(' ')}</p>
+                                    </div>
+                                    <ChevronDown size={20} className={`text-white/40 transition-transform duration-300 ${showTypeDropdown ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {/* Type Dropdown */}
+                                {showTypeDropdown && (
+                                    <div className="absolute z-50 mt-2 w-full max-h-60 overflow-y-auto bg-emerald-950/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+                                        {WALLET_TYPES.map((type) => (
+                                            <button
+                                                key={type.value}
+                                                type="button"
+                                                onClick={() => {
+                                                    setWalletType(type.value);
+                                                    setShowTypeDropdown(false);
+                                                }}
+                                                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/10 transition-colors first:rounded-t-2xl last:rounded-b-2xl ${
+                                                    walletType === type.value ? 'bg-emerald-500/20 text-emerald-300' : 'text-white/80'
+                                                }`}
+                                            >
+                                                <span className="text-lg">{type.label}</span>
+                                                {walletType === type.value && (
+                                                    <Sparkles size={14} className="ml-auto text-emerald-400" />
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                         <div>
                             <label className="block text-xs font-bold text-emerald-300/60 uppercase tracking-widest mb-3">
                                 Currency

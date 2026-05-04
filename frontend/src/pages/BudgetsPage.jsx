@@ -169,106 +169,108 @@ export default function BudgetsPage() {
     return (
         <motion.div 
             initial="hidden" animate="visible" variants={fadeInUp}
-            className="flex gap-7 max-w-[1600px] mx-auto w-full" style={{ alignItems: 'flex-start' }}
+            className="flex flex-col lg:flex-row gap-8 max-w-[1600px] mx-auto w-full pb-12"
         >
             {/* ══ LEFT ══ */}
-            <div className="flex-1 min-w-0 space-y-5">
+            <div className="flex-1 min-w-0 space-y-6 sm:space-y-8">
                 {/* Toolbar */}
-                <div className="flex items-center gap-3 flex-wrap">
-                    <div className="relative">
-                        <select value={periodFilter} onChange={e => setPeriodFilter(e.target.value)}
-                            className="appearance-none pl-4 pr-8 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-bold text-gray-600 focus:outline-none focus:border-[#106E4E] cursor-pointer hover:border-[#106E4E] transition-all">
-                            <option value="all">All Periods</option>
-                            <option value="monthly">Monthly</option>
-                            <option value="yearly">Yearly</option>
-                            <option value="weekly">Weekly</option>
-                        </select>
-                        <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                    </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+                        <div className="relative shrink-0">
+                            <select value={periodFilter} onChange={e => setPeriodFilter(e.target.value)}
+                                className="appearance-none pl-4 pr-9 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-bold text-gray-600 focus:outline-none focus:border-[#106E4E] cursor-pointer hover:border-[#106E4E] transition-all">
+                                <option value="all">All Periods</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="yearly">Yearly</option>
+                                <option value="weekly">Weekly</option>
+                            </select>
+                            <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                        </div>
 
-                    <div className="relative">
-                        <select value={sortBy} onChange={e => setSortBy(e.target.value)}
-                            className="appearance-none pl-4 pr-8 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-bold text-gray-600 focus:outline-none focus:border-[#106E4E] cursor-pointer hover:border-[#106E4E] transition-all">
-                            <option value="default">Sort by: Default</option>
-                            <option value="name">Sort by: Name</option>
-                            <option value="spent">Sort by: Most Spent</option>
-                            <option value="amount">Sort by: Highest Limit</option>
-                        </select>
-                        <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                        <div className="relative shrink-0">
+                            <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+                                className="appearance-none pl-4 pr-9 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-bold text-gray-600 focus:outline-none focus:border-[#106E4E] cursor-pointer hover:border-[#106E4E] transition-all">
+                                <option value="default">Sort by: Default</option>
+                                <option value="name">Sort by: Name</option>
+                                <option value="spent">Sort by: Most Spent</option>
+                                <option value="amount">Sort by: Highest Limit</option>
+                            </select>
+                            <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                        </div>
                     </div>
 
                     <button onClick={() => setShowAdd(true)}
-                        className="ml-auto flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#106E4E] text-white text-sm font-black hover:bg-[#0d5a3f] shadow-lg shadow-[#106E4E]/20 hover:shadow-[#106E4E]/40 hover:-translate-y-0.5 transition-all">
-                        <Plus size={15} /> Add new budget
+                        className="sm:ml-auto flex items-center justify-center gap-2 px-6 py-3 sm:py-2.5 rounded-xl bg-[#106E4E] text-white text-sm font-black hover:bg-[#0d5a3f] shadow-lg shadow-[#106E4E]/20 sm:hover:-translate-y-0.5 transition-all w-full sm:w-auto">
+                        <Plus size={15} /> Add budget
                     </button>
                 </div>
 
                 {/* Sub-filters + count */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4 border-b border-gray-50 pb-4">
                     <div className="relative">
                         <select value={statusFilter} onChange={e => setStatus(e.target.value)}
-                            className="appearance-none pl-3.5 pr-7 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-600 focus:outline-none cursor-pointer hover:border-[#106E4E] transition-all">
-                            <option value="all">Status ▾</option>
+                            className="appearance-none pl-4 pr-8 py-2 rounded-xl border border-gray-200 bg-white text-[10px] font-black uppercase tracking-widest text-gray-500 focus:outline-none cursor-pointer hover:border-[#106E4E] transition-all">
+                            <option value="all">Status: All</option>
                             <option value="on_track">On Track</option>
-                            <option value="attention">Need Attention</option>
+                            <option value="attention">Needs Attention</option>
                             <option value="over">Over Budget</option>
                         </select>
-                        <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                        <ChevronDown size={10} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                     </div>
 
                     {(statusFilter !== 'all' || sortBy !== 'default' || periodFilter !== 'all') && (
                         <button onClick={() => { setStatus('all'); setSortBy('default'); setPeriodFilter('all'); }}
-                            className="flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-gray-700 transition-all">
-                            <RefreshCw size={11} /> Reset all
+                            className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-all">
+                            <RefreshCw size={11} /> Reset
                         </button>
                     )}
-                    <span className="text-xs text-gray-400 font-semibold ml-1">{displayed.length} items</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-300 ml-auto">{displayed.length} items</span>
                 </div>
 
                 {/* Cards */}
                 {displayed.length === 0 ? (
-                    <motion.div variants={fadeInUp} className="bg-white rounded-3xl border border-dashed border-gray-200 p-16 flex flex-col items-center gap-4 text-center shadow-sm">
+                    <motion.div variants={fadeInUp} className="bg-white rounded-[2rem] border border-dashed border-gray-200 p-10 sm:p-20 flex flex-col items-center gap-4 text-center shadow-sm">
                         <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-2 shadow-inner">
                             <Target size={40} className="text-[#106E4E] animate-bounce-slow" />
                         </div>
                         <p className="text-xl font-black text-gray-900">No budgets yet</p>
                         <p className="text-sm text-gray-400 max-w-xs font-medium">Create your first budget to start tracking spending per category.</p>
-                        <button onClick={() => setShowAdd(true)} className="mt-4 px-6 py-3 bg-[#106E4E] text-white rounded-xl font-bold text-sm hover:bg-[#0d5a3f] shadow-md shadow-[#106E4E]/20 hover:-translate-y-0.5 transition-all">
+                        <button onClick={() => setShowAdd(true)} className="mt-4 px-8 py-4 bg-[#106E4E] text-white rounded-xl font-bold text-sm hover:bg-[#0d5a3f] shadow-md shadow-[#106E4E]/20 sm:hover:-translate-y-0.5 transition-all">
                             <Plus size={16} className="inline mr-1.5" /> Create Budget
                         </button>
                     </motion.div>
                 ) : (
-                    <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                         {displayed.map(b => {
                             const color = b.pct >= 90 ? '#f43f5e' : b.pct >= 75 ? '#f59e0b' : '#106E4E';
                             return (
                                 <motion.div variants={fadeInUp} key={b.id}
-                                    className="bg-white rounded-[1.25rem] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-6 group relative overflow-hidden">
+                                    className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl sm:hover:-translate-y-1 transition-all duration-300 p-6 sm:p-8 group relative overflow-hidden">
                                     {/* Soft glow blob */}
                                     <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full blur-2xl opacity-[0.05] pointer-events-none"
                                         style={{ background: color }} />
 
                                     {/* Header */}
-                                    <div className="flex items-center justify-between mb-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-emerald-50/50 flex items-center justify-center">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-50/50 flex items-center justify-center shrink-0">
                                                 <IconFor name={b.name} className="text-[#106E4E]" />
                                             </div>
-                                            <h3 className="text-base font-black text-gray-900 leading-tight">{b.name}</h3>
+                                            <h3 className="text-lg sm:text-xl font-black text-gray-900 leading-tight truncate">{b.name}</h3>
                                         </div>
-                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-all">
-                                                <Pencil size={14} />
+                                        <div className="flex gap-1 sm:opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                            <button className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-all">
+                                                <Pencil size={15} />
                                             </button>
                                             <button onClick={() => handleDel(b.id)}
-                                                className="p-1.5 rounded-lg hover:bg-rose-50 text-gray-400 hover:text-rose-500 transition-all">
-                                                <X size={14} />
+                                                className="p-2 rounded-xl hover:bg-rose-50 text-gray-400 hover:text-rose-500 transition-all">
+                                                <X size={15} />
                                             </button>
                                         </div>
                                     </div>
 
                                     {/* Body: donut + stats */}
-                                    <div className="flex items-center gap-5">
+                                    <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
                                         {/* Donut */}
                                         <div className="relative flex-shrink-0 w-[110px] h-[110px]">
                                             <DonutRing pct={b.pct} color={color} />
@@ -279,97 +281,114 @@ export default function BudgetsPage() {
                                         </div>
 
                                         {/* Right stats */}
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Remaining</p>
-                                            <p className="font-black text-gray-900 tabular-nums leading-none">
-                                                <span className="text-2xl">${fmt(b.left, 2)}</span>
-                                                <span className="text-xs font-bold text-gray-300 ml-1">/ ${fmt(b.amount, 2)}</span>
-                                            </p>
+                                        <div className="flex-1 w-full min-w-0">
+                                            <div className="flex justify-between items-end mb-2">
+                                                <div>
+                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Spent</p>
+                                                    <p className="text-xl font-black text-gray-900 tabular-nums">${fmt(b.spent, 0)}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Limit</p>
+                                                    <p className="text-xl font-bold text-gray-300 tabular-nums">${fmt(b.amount, 0)}</p>
+                                                </div>
+                                            </div>
 
                                             {/* Thin progress bar */}
-                                            <div className="w-full h-1.5 bg-gray-100 rounded-full mt-3 mb-3 overflow-hidden">
+                                            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                                                 <div className="h-full rounded-full transition-all duration-700"
                                                     style={{ width: `${Math.min(b.pct, 100)}%`, background: color }} />
+                                            </div>
+                                            
+                                            <div className="mt-4 flex items-center justify-between">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Remaining</p>
+                                                <p className="text-sm font-black text-[#106E4E] tabular-nums">${fmt(b.left, 2)}</p>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Footer: period */}
-                                            <div className="mt-4 pt-4 border-t border-gray-50 flex items-center gap-1.5 text-[10px] font-bold text-gray-400">
-                                                <Calendar size={10} />
-                                                <span className="uppercase tracking-widest">{b.periodType}</span>
-                                                <span className="ml-auto">{b.startDate} → {b.endDate}</span>
-                                            </div>
-                                        </motion.div>
-                                    );
-                                })}
+                                    <div className="mt-6 pt-4 border-t border-gray-50 flex items-center gap-2 text-[10px] font-bold text-gray-400">
+                                        <Calendar size={12} />
+                                        <span className="uppercase tracking-widest">{b.periodType}</span>
+                                        <span className="ml-auto opacity-60">{b.startDate} — {b.endDate}</span>
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
                     </motion.div>
                 )}
             </div>
 
             {/* ══ RIGHT SIDEBAR ══ */}
-            <div className="w-[288px] xl:w-[320px] flex-shrink-0 space-y-4">
-
+            <div className="w-full lg:w-[320px] xl:w-[360px] flex-shrink-0 space-y-6 lg:sticky lg:top-8">
                 {/* Monthly summary */}
-                <motion.div variants={fadeInUp} className="bg-white rounded-[1.25rem] border border-gray-100 shadow-sm p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                    <div className="flex items-center justify-between mb-2">
-                        <h2 className="text-sm font-black text-gray-900">Monthly budget</h2>
-                        <button className="p-1.5 rounded-lg hover:bg-gray-50 text-gray-400 transition-all">
-                            <MoreHorizontal size={15} />
+                <motion.div variants={fadeInUp} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8 hover:shadow-lg sm:hover:-translate-y-1 transition-all duration-300">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">Monthly Overview</h2>
+                        <button className="p-2 rounded-xl hover:bg-gray-50 text-gray-400 transition-all">
+                            <MoreHorizontal size={18} />
                         </button>
                     </div>
 
                     {/* Total */}
-                    <p className="text-3xl font-black text-gray-900 tabular-nums leading-none mb-2">
-                        {currencySymbol}{fmt(total)}
-                    </p>
-                    <Badge pct={pctAll} />
+                    <div className="mb-6">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Limit</p>
+                        <p className="text-4xl font-black text-gray-900 tabular-nums leading-none mb-3">
+                            {currencySymbol}{fmt(total)}
+                        </p>
+                        <Badge pct={pctAll} />
+                    </div>
 
                     {/* Gauge */}
-                    <div className="relative mt-3 flex justify-center">
+                    <div className="relative mt-8 flex justify-center">
                         <SemiGauge pct={pctAll} />
                         {/* Center label (inside arc bottom) */}
-                        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center pb-1">
+                        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center pb-2">
                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">{Math.round(pctAll)}% spent</p>
-                            <p className="text-xl font-black text-gray-900 tabular-nums">{currencySymbol}{fmt(spent, 0)}</p>
+                            <p className="text-2xl font-black text-gray-900 tabular-nums">{currencySymbol}{fmt(spent, 0)}</p>
                         </div>
-                        {/* Left corner: remaining */}
-                        <div className="absolute bottom-0 left-2 text-right">
-                            <p className="text-[8px] font-bold text-gray-400">{Math.round(100 - pctAll)}% left</p>
-                            <p className="text-[10px] font-black text-gray-600">{currencySymbol}{fmt(left, 0)}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 mt-8 pt-8 border-t border-gray-50">
+                        <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Spent</p>
+                            <p className="text-lg font-black text-rose-500 tabular-nums">{currencySymbol}{fmt(spent, 0)}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Remaining</p>
+                            <p className="text-lg font-black text-[#106E4E] tabular-nums">{currencySymbol}{fmt(left, 0)}</p>
                         </div>
                     </div>
                 </motion.div>
 
                 {/* Most expenses */}
-                <motion.div variants={fadeInUp} className="bg-white rounded-[1.25rem] border border-gray-100 shadow-sm p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-sm font-black text-gray-900">Most expenses</h2>
-                        <span className="text-[10px] font-bold text-gray-400 border border-gray-200 px-2.5 py-1 rounded-lg">This month</span>
+                <motion.div variants={fadeInUp} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8 hover:shadow-lg sm:hover:-translate-y-1 transition-all duration-300">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">Top Expenses</h2>
+                        <span className="text-[10px] font-bold text-gray-400 border border-gray-200 px-3 py-1.5 rounded-xl">This month</span>
                     </div>
 
                     {expenses.length === 0 ? (
-                        <p className="text-xs text-gray-400 text-center py-6 font-medium">No expense records yet</p>
+                        <p className="text-xs text-gray-400 text-center py-10 font-medium bg-gray-50 rounded-[1.5rem] border border-dashed border-gray-200">No records found</p>
                     ) : (
-                        <div className="space-y-4 mt-2">
+                        <div className="space-y-6">
                             {expenses.map(({ cat, amt }, i) => {
+                                const maxAmt = expenses[0].amt;
                                 const bar = (amt / maxAmt) * 100;
                                 const up = i < 2;
                                 return (
-                                    <div key={cat} className="flex items-center gap-3">
-                                        {/* Icon bubble */}
-                                        <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                                    <div key={cat} className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center shrink-0">
                                             <IconFor name={cat} className="text-[#106E4E]" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between mb-1">
+                                            <div className="flex items-center justify-between mb-1.5">
                                                 <span className="text-sm font-black text-gray-900 tabular-nums">{currencySymbol}{fmt(amt, 0)}</span>
-                                                <span className={`text-[9px] font-black flex items-center gap-px px-1.5 py-0.5 rounded-full ${up ? 'text-rose-500 bg-rose-50' : 'text-emerald-600 bg-emerald-50'}`}>
-                                                    {up ? <ArrowUpRight size={10}/> : <ArrowDownRight size={10}/>}
-                                                    {(bar * 0.25 + 1.5).toFixed(1)}%
+                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${up ? 'text-rose-500 bg-rose-50' : 'text-emerald-600 bg-emerald-50'}`}>
+                                                    {up ? '+' : '-'}{(bar * 0.25 + 1.5).toFixed(1)}%
                                                 </span>
                                             </div>
-                                            <p className="text-[10px] font-semibold text-gray-400 truncate mb-1.5">{cat}</p>
+                                            <p className="text-[10px] font-semibold text-gray-400 truncate mb-2">{cat}</p>
                                             <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                                 <div className="h-full rounded-full transition-all duration-700"
                                                     style={{ width: `${bar}%`, background: up ? '#f43f5e' : '#106E4E' }} />
@@ -384,72 +403,79 @@ export default function BudgetsPage() {
             </div>
 
             {/* ══ Add Modal ══ */}
-            <div className="fixed bottom-8 right-8 z-50">
-                <button onClick={() => setShowAdd(true)} aria-label="Add new budget"
-                    className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-gray-900 text-white shadow-lg hover:bg-gray-800 transition-all">
-                    <Plus size={16} />
-                    <span className="text-sm font-black">Add new budget</span>
-                </button>
-            </div>
-
             {showAdd && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[9999] flex items-center justify-center p-6 animate-in fade-in duration-200">
-                    <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 duration-300 border border-gray-100">
-                        <div className="px-8 pt-8 pb-5 flex items-center justify-between border-b border-gray-100">
-                            <h3 className="text-xl font-black text-gray-900">{editingBudget ? 'Edit Budget' : 'New Budget'}</h3>
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-6 animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-md rounded-t-[2.5rem] sm:rounded-[3rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-500 border border-gray-100 max-h-[95vh] flex flex-col">
+                        <div className="p-6 sm:p-8 border-b border-gray-100 flex items-center justify-between shrink-0">
+                            <h3 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+                                {editingBudget ? 'Edit Budget' : 'Define Limit'}
+                            </h3>
                             <button onClick={() => { setShowAdd(false); setEditingBudget(null); }} className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-all">
-                                <X size={18} />
+                                <X size={20} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleAdd} className="p-8 space-y-4 bg-slate-50/50">
-                            {[
-                                { label: 'Budget Name', key: 'name', type: 'text', ph: 'e.g. Food & Groceries' },
-                                { label: `Limit (${currencySymbol})`, key: 'amount', type: 'number', ph: '500.00' },
-                            ].map(({ label, key, type, ph }) => (
-                                <div key={key} className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{label}</label>
-                                    <input type={type} required value={form[key]}
-                                        onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                                        placeholder={ph}
-                                        className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl font-bold text-gray-900 focus:border-[#106E4E] focus:ring-4 focus:ring-[#106E4E]/10 outline-none transition-all placeholder:text-gray-300 shadow-sm" />
-                                </div>
-                            ))}
+                        <form onSubmit={handleAdd} className="p-6 sm:p-8 space-y-5 sm:space-y-6 bg-slate-50/50 overflow-y-auto">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Budget Name</label>
+                                <input type="text" required value={form.name}
+                                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                                    placeholder="e.g. Food & Groceries"
+                                    className="w-full px-5 py-3.5 sm:py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-900 focus:border-[#106E4E] focus:ring-4 focus:ring-[#106E4E]/10 outline-none transition-all placeholder:text-gray-300 shadow-sm text-sm sm:text-base" />
+                            </div>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Period</label>
-                                    <select value={form.periodType} onChange={e => setForm(f => ({ ...f, periodType: e.target.value }))}
-                                        className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl font-bold text-gray-900 focus:border-[#106E4E] focus:ring-4 focus:ring-[#106E4E]/10 outline-none transition-all appearance-none cursor-pointer shadow-sm">
-                                        <option value="weekly">Weekly</option>
-                                        <option value="monthly">Monthly</option>
-                                        <option value="yearly">Yearly</option>
-                                    </select>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Limit ({currencySymbol})</label>
+                                    <input type="number" required value={form.amount}
+                                        onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                                        placeholder="500.00"
+                                        className="w-full px-5 py-3.5 sm:py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-900 tabular-nums focus:border-[#106E4E] focus:ring-4 focus:ring-[#106E4E]/10 outline-none transition-all placeholder:text-gray-300 shadow-sm text-sm sm:text-base" />
                                 </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Category</label>
-                                    <select value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value ? Number(e.target.value) : '' }))}
-                                        className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl font-bold text-gray-900 focus:border-[#106E4E] focus:ring-4 focus:ring-[#106E4E]/10 outline-none transition-all appearance-none cursor-pointer shadow-sm">
-                                        <option value="">No Category (All Expenses)</option>
-                                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                    </select>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Period</label>
+                                    <div className="relative">
+                                        <select value={form.periodType} onChange={e => setForm(f => ({ ...f, periodType: e.target.value }))}
+                                            className="w-full px-5 py-3.5 sm:py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-900 focus:border-[#106E4E] focus:ring-4 focus:ring-[#106E4E]/10 outline-none transition-all appearance-none cursor-pointer shadow-sm text-sm sm:text-base">
+                                            <option value="weekly">Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                            <option value="yearly">Yearly</option>
+                                        </select>
+                                        <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                {[['Start Date','startDate'],['End Date','endDate']].map(([lbl, key]) => (
-                                    <div key={key} className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{lbl}</label>
-                                        <input type="date" required value={form[key]}
-                                            onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                                            className="w-full px-3 py-3.5 bg-white border border-gray-200 rounded-xl font-bold text-gray-900 focus:border-[#106E4E] focus:ring-4 focus:ring-[#106E4E]/10 outline-none transition-all shadow-sm" />
-                                    </div>
-                                ))}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Category Binding</label>
+                                <div className="relative">
+                                    <select value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value ? Number(e.target.value) : '' }))}
+                                        className="w-full px-5 py-3.5 sm:py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-900 focus:border-[#106E4E] focus:ring-4 focus:ring-[#106E4E]/10 outline-none transition-all appearance-none cursor-pointer shadow-sm text-sm sm:text-base">
+                                        <option value="">Apply to All Categories</option>
+                                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    </select>
+                                    <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Start Date</label>
+                                    <input type="date" required value={form.startDate}
+                                        onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
+                                        className="w-full px-5 py-3.5 sm:py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-900 focus:border-[#106E4E] focus:ring-4 focus:ring-[#106E4E]/10 outline-none transition-all shadow-sm text-sm sm:text-base" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">End Date</label>
+                                    <input type="date" required value={form.endDate}
+                                        onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
+                                        className="w-full px-5 py-3.5 sm:py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-900 focus:border-[#106E4E] focus:ring-4 focus:ring-[#106E4E]/10 outline-none transition-all shadow-sm text-sm sm:text-base" />
+                                </div>
                             </div>
 
                             <button type="submit"
-                                className="w-full py-4 bg-[#106E4E] text-white font-black rounded-xl hover:bg-[#0d5a3f] shadow-lg shadow-[#106E4E]/20 hover:shadow-[#106E4E]/40 hover:-translate-y-0.5 transition-all text-sm mt-4">
-                                Create Budget
+                                className="w-full py-4 sm:py-5 bg-[#106E4E] text-white font-black rounded-2xl hover:bg-[#0d5a3f] shadow-xl shadow-[#106E4E]/20 sm:hover:-translate-y-0.5 transition-all text-sm sm:text-base mt-2 sm:mt-4">
+                                {editingBudget ? 'Save Changes' : 'Initialize Budget'}
                             </button>
                         </form>
                     </div>

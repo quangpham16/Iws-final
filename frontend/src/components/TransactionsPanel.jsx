@@ -204,78 +204,72 @@ export default function TransactionsPanel() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             {/* Filters bar */}
-            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm px-6 py-4">
-                <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-gray-400">category</span>
-                        <div className="relative">
-                            <select value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setPage(1); }}
-                                className="appearance-none pl-4 pr-9 py-2.5 rounded-2xl border-2 border-gray-200 bg-white text-gray-700 text-sm font-bold focus:outline-none focus:border-[#106E4E] cursor-pointer">
-                                <option value="ALL">All Categories</option>
-                                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
-                            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4 sm:p-6">
+                <div className="flex flex-col gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="space-y-1.5">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">category</span>
+                            <div className="relative">
+                                <select value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setPage(1); }}
+                                    className="w-full appearance-none pl-4 pr-10 py-2.5 rounded-xl border-2 border-gray-100 bg-gray-50 text-gray-700 text-sm font-bold focus:outline-none focus:border-[#106E4E] focus:bg-white transition-all">
+                                    <option value="ALL">All Categories</option>
+                                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </select>
+                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">wallet</span>
+                            <div className="relative">
+                                <select value={filterWallet} onChange={e => { setFilterWallet(e.target.value); setPage(1); }}
+                                    className="w-full appearance-none pl-4 pr-10 py-2.5 rounded-xl border-2 border-gray-100 bg-gray-50 text-gray-700 text-sm font-bold focus:outline-none focus:border-[#106E4E] focus:bg-white transition-all">
+                                    <option value="ALL">All Wallets</option>
+                                    {wallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                </select>
+                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">type</span>
+                            <div className="relative">
+                                <select value={filterType} onChange={e => { setFilterType(e.target.value); setPage(1); }}
+                                    className="w-full appearance-none pl-4 pr-10 py-2.5 rounded-xl border-2 border-gray-100 bg-gray-50 text-gray-700 text-sm font-bold focus:outline-none focus:border-[#106E4E] focus:bg-white transition-all">
+                                    <option value="ALL">All Types</option>
+                                    <option value="SENT">Sent</option>
+                                    <option value="RECEIVED">Received</option>
+                                </select>
+                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">search</span>
+                            <div className="relative">
+                                <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input type="text" placeholder="Search..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
+                                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border-2 border-gray-100 bg-gray-50 text-sm font-bold text-gray-700 focus:outline-none focus:border-[#106E4E] focus:bg-white transition-all" />
+                            </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-gray-400">tag</span>
-                        <div className="relative">
-                            <select value={filterTag} onChange={e => { setFilterTag(e.target.value); setPage(1); }}
-                                className="appearance-none pl-4 pr-9 py-2.5 rounded-2xl border-2 border-gray-200 bg-white text-gray-700 text-sm font-bold focus:outline-none focus:border-[#106E4E] cursor-pointer">
-                                <option value="ALL">All Tags</option>
-                                {tags.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                            </select>
-                            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-gray-50">
+                        <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto">
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Date Range</span>
+                                <div className="flex items-center gap-2">
+                                    <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }}
+                                        className="px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50 text-xs font-bold text-gray-600 focus:outline-none focus:border-[#106E4E]" />
+                                    <span className="text-gray-300">—</span>
+                                    <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }}
+                                        className="px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50 text-xs font-bold text-gray-600 focus:outline-none focus:border-[#106E4E]" />
+                                </div>
+                            </div>
                         </div>
+                        {hasFilters && (
+                            <button onClick={resetFilters} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-900 transition-all text-xs font-bold w-full sm:w-auto justify-center">
+                                <X size={14} /> Clear All Filters
+                            </button>
+                        )}
                     </div>
-                    <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-gray-400">wallet</span>
-                        <div className="relative">
-                            <select value={filterWallet} onChange={e => { setFilterWallet(e.target.value); setPage(1); }}
-                                className="appearance-none pl-4 pr-9 py-2.5 rounded-2xl border-2 border-gray-200 bg-white text-gray-700 text-sm font-bold focus:outline-none focus:border-[#106E4E] cursor-pointer">
-                                <option value="ALL">All Wallets</option>
-                                {wallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                            </select>
-                            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-gray-400">type</span>
-                        <div className="relative">
-                            <select value={filterType} onChange={e => { setFilterType(e.target.value); setPage(1); }}
-                                className="appearance-none pl-4 pr-9 py-2.5 rounded-2xl border-2 border-gray-200 bg-white text-gray-700 text-sm font-bold focus:outline-none focus:border-[#106E4E] cursor-pointer">
-                                <option value="ALL">All Types</option>
-                                <option value="SENT">Sent</option>
-                                <option value="RECEIVED">Received</option>
-                            </select>
-                            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                        </div>
-                    </div>
-                    <span className="text-gray-300 font-bold">·</span>
-                    <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-gray-400">from</span>
-                        <div className="relative">
-                            <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }}
-                                className="pl-4 pr-9 py-2.5 rounded-2xl border-2 border-gray-200 bg-white text-gray-700 text-sm font-bold focus:outline-none focus:border-[#106E4E] cursor-pointer" />
-                            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                        </div>
-                        <span className="text-sm font-bold text-gray-400">to</span>
-                        <div className="relative">
-                            <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }}
-                                className="pl-4 pr-9 py-2.5 rounded-2xl border-2 border-gray-200 bg-white text-gray-700 text-sm font-bold focus:outline-none focus:border-[#106E4E] cursor-pointer" />
-                            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                        </div>
-                    </div>
-                    <div className="relative ml-auto">
-                        <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input type="text" placeholder="Search..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-                            className="pl-10 pr-4 py-2.5 rounded-2xl border-2 border-gray-200 bg-white text-sm font-bold text-gray-700 focus:outline-none focus:border-[#106E4E] w-48 placeholder:text-gray-400 placeholder:font-medium" />
-                    </div>
-                    {hasFilters && (
-                        <button onClick={resetFilters} className="p-2.5 rounded-2xl hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition-all" title="Clear filters">
-                            <X size={16} />
-                        </button>
-                    )}
                 </div>
             </div>
 
@@ -433,7 +427,7 @@ export default function TransactionsPanel() {
                                             })()}
                                         </td>
                                         <td className="px-4 py-5 text-right">
-                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                            <div className="flex items-center gap-1 sm:opacity-0 group-hover:opacity-100 transition-all">
                                                 <button onClick={() => handleOpenForm(t)}
                                                     className="p-2 rounded-xl text-gray-300 hover:text-[#106E4E] hover:bg-emerald-50 transition-all">
                                                     <Edit2 size={15} />
@@ -452,43 +446,49 @@ export default function TransactionsPanel() {
                 </div>
 
                 {/* Pagination footer */}
-                <div className="px-6 py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-gray-400">Show</span>
-                        <div className="relative">
-                            <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-                                className="appearance-none pl-4 pr-8 py-2 rounded-2xl border-2 border-gray-200 bg-white text-sm font-black text-gray-700 focus:outline-none focus:border-[#106E4E] cursor-pointer">
-                                {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
-                            </select>
-                            <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <div className="px-6 py-6 border-t border-gray-100 flex flex-col lg:flex-row items-center justify-between gap-6">
+                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Show</span>
+                            <div className="relative">
+                                <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+                                    className="appearance-none pl-4 pr-9 py-2 rounded-xl border-2 border-gray-200 bg-white text-sm font-black text-gray-700 focus:outline-none focus:border-[#106E4E] cursor-pointer">
+                                    {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
+                                </select>
+                                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                            </div>
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">entries</span>
                         </div>
-                        <span className="text-sm font-bold text-gray-400">entries</span>
-                        <span className="text-sm font-bold text-gray-500 ml-2">
-                            Showing {startEntry}–{endEntry} of {filtered.length} entries
+                        <div className="h-4 w-px bg-gray-200 hidden sm:block mx-2"></div>
+                        <span className="text-xs font-bold text-gray-500">
+                            Showing <span className="text-gray-900 font-black">{startEntry}–{endEntry}</span> of <span className="text-gray-900 font-black">{filtered.length}</span> entries
                         </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    
+                    <div className="flex items-center gap-2 w-full lg:w-auto justify-center">
                         <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-2xl border-2 border-gray-200 text-sm font-black text-gray-500 hover:border-[#106E4E] hover:text-[#106E4E] disabled:opacity-30 disabled:cursor-not-allowed transition-all">
-                            <ChevronLeft size={14} /> Previous
+                            className="p-2.5 rounded-xl border-2 border-gray-100 text-gray-400 hover:border-[#106E4E] hover:text-[#106E4E] disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                            <ChevronLeft size={18} />
                         </button>
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                            let p;
-                            if (totalPages <= 5) p = i + 1;
-                            else if (page <= 3) p = i + 1;
-                            else if (page >= totalPages - 2) p = totalPages - 4 + i;
-                            else p = page - 2 + i;
-                            return (
-                                <button key={p} onClick={() => setPage(p)}
-                                    className={`w-10 h-10 rounded-2xl text-sm font-black transition-all ${page === p ? 'bg-[#106E4E] text-white shadow-lg shadow-[#106E4E]/20' : 'border-2 border-gray-200 text-gray-500 hover:border-[#106E4E] hover:text-[#106E4E]'
-                                        }`}>
-                                    {p}
-                                </button>
-                            );
-                        })}
+                        <div className="flex items-center gap-1">
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                let p;
+                                if (totalPages <= 5) p = i + 1;
+                                else if (page <= 3) p = i + 1;
+                                else if (page >= totalPages - 2) p = totalPages - 4 + i;
+                                else p = page - 2 + i;
+                                return (
+                                    <button key={p} onClick={() => setPage(p)}
+                                        className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${page === p ? 'bg-[#106E4E] text-white shadow-lg shadow-[#106E4E]/20' : 'text-gray-500 hover:bg-gray-100'
+                                            }`}>
+                                        {p}
+                                    </button>
+                                );
+                            })}
+                        </div>
                         <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-2xl border-2 border-gray-200 text-sm font-black text-gray-500 hover:border-[#106E4E] hover:text-[#106E4E] disabled:opacity-30 disabled:cursor-not-allowed transition-all">
-                            Next <ChevronRight size={14} />
+                            className="p-2.5 rounded-xl border-2 border-gray-100 text-gray-400 hover:border-[#106E4E] hover:text-[#106E4E] disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                            <ChevronRight size={18} />
                         </button>
                     </div>
                 </div>

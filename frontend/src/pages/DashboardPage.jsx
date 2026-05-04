@@ -30,6 +30,11 @@ const DONUT_FALLBACK = ['#0f766e', '#14b8a6', '#5eead4', '#99f6e4', '#ccfbf1', '
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+const CURRENCY_SYMBOLS = {
+    'USD': '$', 'EUR': '€', 'GBP': '£', 'VND': '₫', 'JPY': '¥', 'KRW': '₩',
+    'CNY': '¥', 'THB': '฿', 'AUD': 'A$', 'CAD': 'C$', 'SGD': 'S$', 'INR': '₹',
+};
+
 const formatMoney = (n) => {
     const x = Number(n);
     if (Number.isNaN(x)) return '0';
@@ -89,6 +94,7 @@ export default function DashboardPage() {
     const [walletFilter, setWalletFilter] = useState('all');
     const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
     const [walletMenuOpen, setWalletMenuOpen] = useState(false);
+    const [currencySymbol, setCurrencySymbol] = useState('$');
 
     useEffect(() => {
         let cancelled = false;
@@ -109,6 +115,12 @@ export default function DashboardPage() {
                 setGoals(Array.isArray(goalRes.data) ? goalRes.data : []);
                 setTags(Array.isArray(tagRes.data) ? tagRes.data : []);
                 setTotalBalance(Number(balRes.data?.totalBalance) || 0);
+
+                // Set currency symbol from first wallet
+                if (Array.isArray(walRes.data) && walRes.data.length > 0) {
+                    const currencyCode = walRes.data[0].currencyCode || 'USD';
+                    setCurrencySymbol(CURRENCY_SYMBOLS[currencyCode] || '$');
+                }
             } catch (e) {
                 console.error(e);
             } finally {
@@ -273,7 +285,7 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="w-full min-w-0 space-y-6 animate-in fade-in duration-500 pb-0">
+        <div className="w-full min-w-0 space-y-6 animate-in fade-in duration-500 pb-8">
             {/* Toolbar — Export CSV only on the right */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-3">
@@ -284,13 +296,20 @@ export default function DashboardPage() {
                     >
                         <Calendar size={18} />
                     </button>
-
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setPeriod(period === 'month' ? 'year' : 'month')}
+                            className="h-11 px-4 rounded-xl border border-gray-200 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all"
+                        >
+                            {period === 'month' ? 'Monthly' : 'Yearly'}
+                        </button>
+                    </div>
                 </div>
 
                 <button
                     type="button"
                     onClick={handleExportCsv}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#106E4E] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/15 hover:bg-[#0d5c44] transition-colors sm:self-auto self-start"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#106E4E] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/15 hover:bg-[#0d5c44] transition-colors w-full sm:w-auto"
                 >
                     <Download size={18} />
                     Export CSV
@@ -298,28 +317,28 @@ export default function DashboardPage() {
             </div>
 
             {/* Summary cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 items-stretch">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
                 <SummaryCard
                     title="Total balance"
-                    value={`$${formatMoney(totalBalance)}`}
+                    value={`${currencySymbol}${formatMoney(totalBalance)}`}
                     footerHint="Across all wallets"
                 />
                 <SummaryCard
                     title="Income"
-                    value={`$${formatMoney(totals.income)}`}
+                    value={`${currencySymbol}${formatMoney(totals.income)}`}
                     trendPct={incomeTrend}
                     subtitle={`vs last ${period === 'month' ? 'month' : 'year'}`}
                 />
                 <SummaryCard
                     title="Expense"
-                    value={`$${formatMoney(totals.expense)}`}
+                    value={`${currencySymbol}${formatMoney(totals.expense)}`}
                     trendPct={expenseTrend}
                     subtitle={`vs last ${period === 'month' ? 'month' : 'year'}`}
                     isExpense
                 />
                 <SummaryCard
                     title="Net savings"
-                    value={`$${formatMoney(Math.max(0, totals.net))}`}
+                    value={`${currencySymbol}${formatMoney(Math.max(0, totals.net))}`}
                     trendPct={savingsTrend}
                     subtitle={`vs last ${period === 'month' ? 'month' : 'year'}`}
                 />
@@ -327,8 +346,8 @@ export default function DashboardPage() {
 
             {/* Charts — wider money flow */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                <div className="lg:col-span-9 rounded-[1.25rem] border border-gray-100 bg-white p-5 sm:p-6 shadow-sm min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+                <div className="lg:col-span-8 xl:col-span-9 rounded-[1.25rem] border border-gray-100 bg-white p-5 sm:p-6 shadow-sm min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                         <div>
                             <h2 className="text-lg font-bold text-gray-900">Money flow</h2>
                             <p className="text-sm text-gray-500">
@@ -384,7 +403,7 @@ export default function DashboardPage() {
                             )}
                         </div>
                     </div>
-                    <div className="flex items-center gap-6 mb-2 text-xs font-semibold">
+                    <div className="flex items-center gap-6 mb-4 text-xs font-semibold">
                         <span className="flex items-center gap-2 text-gray-600">
                             <span className="h-2.5 w-2.5 rounded-full bg-[#106E4E]" />
                             Income
@@ -394,21 +413,21 @@ export default function DashboardPage() {
                             Expense
                         </span>
                     </div>
-                    <div className="h-[min(22rem,42vh)] min-h-[280px] w-full">
+                    <div className="h-[280px] sm:h-[320px] w-full">
                         {moneyFlowData.some((d) => d.income > 0 || d.expense > 0) ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={moneyFlowData} barGap={6}>
                                     <XAxis
                                         dataKey="month"
-                                        tick={{ fontSize: 11, fill: '#64748b' }}
+                                        tick={{ fontSize: 10, fill: '#64748b' }}
                                         axisLine={false}
                                         tickLine={false}
                                     />
                                     <YAxis
-                                        tick={{ fontSize: 11, fill: '#64748b' }}
+                                        tick={{ fontSize: 10, fill: '#64748b' }}
                                         axisLine={false}
                                         tickLine={false}
-                                        tickFormatter={(v) => (v >= 1000 ? `$${v / 1000}k` : `$${v}`)}
+                                        tickFormatter={(v) => (v >= 1000 ? `${currencySymbol}${v / 1000}k` : `${currencySymbol}${v}`)}
                                     />
                                     <Tooltip
                                         cursor={{ fill: 'rgba(16, 110, 78, 0.06)' }}
@@ -417,72 +436,72 @@ export default function DashboardPage() {
                                             border: '1px solid #e2e8f0',
                                             boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
                                         }}
-                                        formatter={(value) => [`$${formatMoney(value)}`, '']}
+                                        formatter={(value) => [`${currencySymbol}${formatMoney(value)}`, '']}
                                     />
-                                    <Bar dataKey="income" fill="#106E4E" radius={[6, 6, 0, 0]} maxBarSize={36} />
-                                    <Bar dataKey="expense" fill="#a7f3d0" radius={[6, 6, 0, 0]} maxBarSize={36} />
+                                    <Bar dataKey="income" fill="#106E4E" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                                    <Bar dataKey="expense" fill="#a7f3d0" radius={[4, 4, 0, 0]} maxBarSize={30} />
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
                             <div className="flex h-full items-center justify-center text-sm text-gray-400">
-                                No income/expense in this range yet — add categorized transactions to see the chart.
+                                No income/expense in this range yet.
                             </div>
                         )}
                     </div>
                 </div>
 
-                <div className="lg:col-span-3 rounded-[1.25rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-sm flex flex-col min-w-0">
+                <div className="lg:col-span-4 xl:col-span-3 rounded-[1.25rem] border border-gray-100 bg-white p-5 shadow-sm flex flex-col min-w-0">
                     <h2 className="text-lg font-bold text-gray-900 mb-1">Budget</h2>
-                    <p className="text-sm text-gray-500 mb-3">Spending by category</p>
+                    <p className="text-sm text-gray-500 mb-4">Spending by category</p>
                     {budgetSlices.length === 0 ? (
                         <div className="flex flex-1 items-center justify-center text-sm text-gray-400 min-h-[180px]">
                             No expense data this period.
                         </div>
-        ) : (
-            <div className="flex flex-1 flex-col items-center gap-3 min-h-[220px]">
-                <ul className="w-full space-y-1.5 text-[11px] max-h-[120px] overflow-y-auto pr-1">
-                    {budgetSlices.map((s) => (
-                        <li key={s.name} className="flex items-center justify-between gap-2 text-gray-600">
-                            <span className="flex items-center gap-2 min-w-0">
-                                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: s.color }} />
-                                <span className="truncate">{s.name}</span>
-                            </span>
-                            <span className="font-semibold text-gray-800 shrink-0">${formatMoney(s.value)}</span>
-                        </li>
-                    ))}
-                </ul>
-                <div className="relative h-[170px] w-[170px] shrink-0 mx-auto">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                                data={budgetSlices}
-                                dataKey="value"
-                                innerRadius={60}
-                                outerRadius={75}
-                                paddingAngle={2}
-                                strokeWidth={0}
-                            >
-                                {budgetSlices.map((entry) => (
-                                    <Cell key={entry.name} fill={entry.color} />
+                    ) : (
+                        <div className="flex flex-1 flex-col items-center gap-4">
+                            <div className="relative h-[200px] w-full max-w-[200px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={budgetSlices}
+                                            dataKey="value"
+                                            innerRadius={65}
+                                            outerRadius={85}
+                                            paddingAngle={2}
+                                            strokeWidth={0}
+                                        >
+                                            {budgetSlices.map((entry) => (
+                                                <Cell key={entry.name} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip formatter={(v) => `${currencySymbol}${formatMoney(v)}`} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Total</p>
+                                    <p className="text-lg font-black text-[#064e3b]">{`${currencySymbol}${formatMoney(budgetTotal)}`}</p>
+                                </div>
+                            </div>
+                            <ul className="w-full space-y-2 text-xs overflow-y-auto max-h-[140px] pr-2">
+                                {budgetSlices.map((s) => (
+                                    <li key={s.name} className="flex items-center justify-between gap-2 text-gray-600">
+                                        <span className="flex items-center gap-2 min-w-0">
+                                            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: s.color }} />
+                                            <span className="truncate font-medium">{s.name}</span>
+                                        </span>
+                                        <span className="font-bold text-gray-800 shrink-0">{`${currencySymbol}${formatMoney(s.value)}`}</span>
+                                    </li>
                                 ))}
-                            </Pie>
-                            <Tooltip formatter={(v) => `$${formatMoney(v)}`} />
-                        </PieChart>
-                    </ResponsiveContainer>
-                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Total</p>
-                        <p className="text-lg font-black text-[#064e3b]">${formatMoney(budgetTotal)}</p>
-                    </div>
+                            </ul>
+                        </div>
+                    )}
                 </div>
             </div>
-        )}
-    </div>
-            </div >
 
-        {/* Compact transactions (same style as Transactions tab) + goals */ }
-        < div className = "grid grid-cols-1 lg:grid-cols-5 gap-4 items-start" >
-                <div className="lg:col-span-3 rounded-[2rem] border border-gray-100 bg-white overflow-hidden shadow-sm min-w-0">
-                    <div className="flex items-center justify-between gap-2 px-5 py-3 border-b border-gray-100 bg-[#106E4E]/5">
+            {/* Compact transactions + goals */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                <div className="lg:col-span-7 xl:col-span-8 rounded-[1.25rem] border border-gray-100 bg-white overflow-hidden shadow-sm">
+                    <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-gray-100 bg-[#106E4E]/5">
                         <h2 className="text-base font-black text-gray-900 tracking-tight">Recent transactions</h2>
                         <Link
                             to="/transactions"
@@ -491,125 +510,45 @@ export default function DashboardPage() {
                             See all →
                         </Link>
                     </div>
-                    <div className="overflow-x-auto max-h-[320px] overflow-y-auto">
-                        <table className="w-full border-collapse min-w-[640px]">
-                            <thead className="sticky top-0 z-10">
+                    <div className="overflow-x-auto">
+                        <table className="w-full border-collapse min-w-[600px]">
+                            <thead>
                                 <tr className="bg-[#106E4E]/5 border-b border-[#106E4E]/10">
-                                    <th className="px-4 py-2.5 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E] whitespace-nowrap">
-                                        Date
-                                    </th>
-                                    <th className="px-4 py-2.5 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">
-                                        Note
-                                    </th>
-                                    <th className="px-4 py-2.5 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">
-                                        Category
-                                    </th>
-                                    <th className="px-4 py-2.5 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">
-                                        Tags
-                                    </th>
-                                    <th className="px-4 py-2.5 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">
-                                        Wallet
-                                    </th>
-                                    <th className="px-4 py-2.5 text-right text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E] whitespace-nowrap">
-                                        Amount
-                                    </th>
+                                    <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Date</th>
+                                    <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Note</th>
+                                    <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Category</th>
+                                    <th className="px-5 py-3 text-right text-[10px] font-black uppercase tracking-[0.2em] text-[#106E4E]">Amount</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                                 {recentTransactions.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="px-4 py-10 text-center text-gray-400 text-sm font-bold">
+                                        <td colSpan={4} className="px-5 py-10 text-center text-gray-400 text-sm font-bold">
                                             No transactions yet.
                                         </td>
                                     </tr>
                                 ) : (
                                     recentTransactions.map((t) => {
-                                        const dateStr = t.date
-                                            ? new Date(t.date + 'T00:00:00').toLocaleDateString('en-GB', {
-                                                  day: '2-digit',
-                                                  month: 'short',
-                                                  year: 'numeric',
-                                              })
-                                            : '—';
-                                        const txnTags = tags.filter((tag) =>
-                                            (t.tagIds || []).some((tid) => Number(tid) === Number(tag.id))
-                                        );
-                                        const wallet = wallets.find((w) => Number(w.id) === Number(t.walletId));
                                         const category = t.categoryId != null ? catById[t.categoryId] : null;
                                         return (
                                             <tr key={t.id} className="hover:bg-gray-50/60 transition-colors">
-                                                <td className="px-4 py-3 text-xs font-bold text-gray-500 whitespace-nowrap">
-                                                    {dateStr}
+                                                <td className="px-5 py-3 text-xs font-bold text-gray-500">
+                                                    {new Date(t.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                                                 </td>
-                                                <td className="px-4 py-3 max-w-[100px]">
-                                                    {t.note ? (
-                                                        <p className="text-xs font-bold text-gray-900 line-clamp-2">{t.note}</p>
-                                                    ) : (
-                                                        <span className="text-[11px] text-gray-300 font-medium">—</span>
-                                                    )}
+                                                <td className="px-5 py-3">
+                                                    <p className="text-xs font-bold text-gray-900 truncate max-w-[150px]">{t.note || '—'}</p>
                                                 </td>
-                                                <td className="px-4 py-3">
+                                                <td className="px-5 py-3">
                                                     {category ? (
-                                                        <span
-                                                            className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-1 rounded-xl max-w-[120px]"
-                                                            style={{
-                                                                backgroundColor: `${category.colorHex}20`,
-                                                                color: category.colorHex,
-                                                            }}
-                                                        >
-                                                            <span
-                                                                className="w-1.5 h-1.5 rounded-full shrink-0"
-                                                                style={{ backgroundColor: category.colorHex }}
-                                                            />
-                                                            <span className="truncate">{category.name}</span>
+                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-1 rounded-lg"
+                                                            style={{ backgroundColor: `${category.colorHex}15`, color: category.colorHex }}>
+                                                            {category.name}
                                                         </span>
-                                                    ) : (
-                                                        <span className="text-[11px] text-gray-300 font-medium">—</span>
-                                                    )}
+                                                    ) : '—'}
                                                 </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {txnTags.length > 0 ? (
-                                                            txnTags.slice(0, 2).map((tag) => (
-                                                                <span
-                                                                    key={tag.id}
-                                                                    className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border truncate max-w-[72px]"
-                                                                    style={{
-                                                                        backgroundColor: `${tag.colorHex}10`,
-                                                                        color: tag.colorHex,
-                                                                        borderColor: `${tag.colorHex}30`,
-                                                                    }}
-                                                                >
-                                                                    {tag.name}
-                                                                </span>
-                                                            ))
-                                                        ) : (
-                                                            <span className="text-[11px] text-gray-300 font-medium">—</span>
-                                                        )}
-                                                        {txnTags.length > 2 ? (
-                                                            <span className="text-[9px] font-bold text-gray-400">+{txnTags.length - 2}</span>
-                                                        ) : null}
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3 align-top whitespace-normal">
-                                                    {wallet ? (
-                                                        <span className="inline-flex items-start gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-gray-100 text-gray-600 whitespace-normal">
-                                                            <Wallet size={12} className="shrink-0 mt-0.5" />
-                                                            <span className="break-words">{wallet.name}</span>
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-[11px] text-gray-300 font-medium">—</span>
-                                                    )}
-                                                </td>
-                                                <td className="px-4 py-3 text-right">
-                                                    <span className="text-sm font-black tabular-nums text-gray-900">
-                                                        $
-                                                        {t.amount
-                                                            ? parseFloat(t.amount).toLocaleString(undefined, {
-                                                                  minimumFractionDigits: 0,
-                                                                  maximumFractionDigits: 0,
-                                                              })
-                                                            : '0'}
+                                                <td className="px-5 py-3 text-right">
+                                                    <span className="text-sm font-black text-gray-900">
+                                                        {currencySymbol}{formatMoney(t.amount)}
                                                     </span>
                                                 </td>
                                             </tr>
@@ -621,51 +560,49 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                <div className="lg:col-span-2 rounded-[1.25rem] border border-gray-100 bg-[#FAFBFC] p-5 sm:p-6 shadow-sm min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="lg:col-span-5 xl:col-span-4 rounded-[1.25rem] border border-gray-100 bg-[#FAFBFC] p-5 sm:p-6 shadow-sm min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-4">
                         <h2 className="text-lg font-bold text-gray-900">Saving goals</h2>
                         <Link to="/goals" className="text-xs font-semibold text-[#106E4E] hover:underline">
                             Manage
                         </Link>
                     </div>
-                    <p className="text-sm text-gray-500 mb-5">From your goals</p>
-                {goals.length === 0 ? (
-                    <div className="text-sm text-gray-400 py-8 text-center">
-                        No goals yet.{' '}
-                        <Link to="/goals" className="text-[#106E4E] font-semibold hover:underline">
-                            Create one
-                        </Link>
-                    </div>
-                ) : (
-                    <ul className="space-y-5">
-                        {goals.slice(0, 5).map((g) => {
-                            const target = parseFloat(g.targetAmount) || 0;
-                            const current = parseFloat(g.currentAmount) || 0;
-                            const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
-                            return (
-                                <li key={g.id}>
-                                    <div className="flex items-center justify-between gap-2 text-sm mb-2">
-                                        <span className="font-semibold text-gray-800 truncate">{g.name}</span>
-                                        <span className="text-gray-500 shrink-0 tabular-nums text-xs">
-                                            ${formatMoney(current)} / ${formatMoney(target)}
-                                        </span>
-                                    </div>
-                                    <div className="h-3 w-full rounded-full bg-emerald-100 overflow-hidden">
-                                        <div
-                                            className="h-full rounded-full bg-gradient-to-r from-[#106E4E] to-emerald-500 flex items-center justify-end pr-1 min-w-[2rem]"
-                                            style={{ width: `${pct}%` }}
-                                        >
-                                            <span className="text-[10px] font-bold text-white">{pct}%</span>
+                    {goals.length === 0 ? (
+                        <div className="text-sm text-gray-400 py-8 text-center bg-white rounded-2xl border border-dashed border-gray-200">
+                            No goals yet.
+                        </div>
+                    ) : (
+                        <ul className="space-y-4">
+                            {goals.slice(0, 4).map((g) => {
+                                const target = parseFloat(g.targetAmount) || 1;
+                                const current = parseFloat(g.currentAmount) || 0;
+                                const pct = Math.min(100, Math.round((current / target) * 100));
+                                return (
+                                    <li key={g.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                                        <div className="flex items-center justify-between gap-2 text-sm mb-3">
+                                            <span className="font-bold text-gray-800 truncate">{g.name}</span>
+                                            <span className="text-gray-500 tabular-nums text-xs font-medium">
+                                                {pct}%
+                                            </span>
                                         </div>
-                                    </div>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                )}
+                                        <div className="h-2 w-full rounded-full bg-gray-100 overflow-hidden">
+                                            <div
+                                                className="h-full rounded-full bg-emerald-600 transition-all duration-500"
+                                                style={{ width: `${pct}%` }}
+                                            />
+                                        </div>
+                                        <div className="flex justify-between mt-2">
+                                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Progress</span>
+                                            <span className="text-[10px] text-gray-600 font-bold">{currencySymbol}{formatMoney(current)} / {currencySymbol}{formatMoney(target)}</span>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
+                </div>
             </div>
         </div>
-        </div >
     );
 }
 
@@ -676,30 +613,33 @@ function SummaryCard({ title, value, trendPct, subtitle, footerHint, isExpense }
     if (isExpense) good = !up;
 
     return (
-        <div className="rounded-[1.25rem] border border-gray-100 bg-[#FAFBFC] px-6 py-7 min-h-[168px] flex flex-col shadow-sm relative overflow-hidden hover:border-emerald-200/80 transition-colors">
+        <div className="rounded-[1.5rem] sm:rounded-[2rem] border border-gray-100 bg-white px-5 py-6 sm:px-6 sm:py-7 min-h-[140px] sm:min-h-[168px] flex flex-col shadow-sm relative overflow-hidden hover:border-emerald-200/80 hover:shadow-md transition-all group">
+            {/* Background Accent */}
+            <div className={`absolute top-0 right-0 w-24 h-24 blur-3xl opacity-[0.03] pointer-events-none rounded-full -mr-8 -mt-8 ${good ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+            
             <button
                 type="button"
-                className="absolute top-5 right-5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-400 hover:text-[#106E4E] hover:border-emerald-200 transition-colors"
+                className="absolute top-4 right-4 sm:top-5 sm:right-5 inline-flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-gray-100 bg-gray-50/50 text-gray-400 group-hover:text-[#106E4E] group-hover:bg-emerald-50 group-hover:border-emerald-100 transition-all"
                 aria-label="Detail"
             >
                 <ArrowUpRight size={18} />
             </button>
-            <p className="text-sm font-medium text-gray-500 mb-2 pr-14">{title}</p>
-            <p className="text-3xl font-black text-gray-900 tracking-tight mb-auto pt-1">{value}</p>
-            <div className="mt-5">
+            <p className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mb-1 sm:mb-2 pr-12">{title}</p>
+            <p className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight mb-auto pt-1 tabular-nums">{value}</p>
+            <div className="mt-4 sm:mt-5">
                 {footerHint ? (
-                    <p className="text-xs font-semibold text-gray-400">{footerHint}</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{footerHint}</p>
                 ) : showTrend ? (
                     <div
-                        className={`inline-flex flex-wrap items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-bold ${good ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                        className={`inline-flex flex-wrap items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider ${good ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
                             }`}
                     >
-                        {up ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                        {up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                         {`${up ? '+' : ''}${trendPct.toFixed(1)}%`}
-                        <span className="font-medium text-gray-400 ml-1">{subtitle}</span>
+                        <span className="font-bold text-gray-400/60 lowercase tracking-normal ml-1">{subtitle}</span>
                     </div>
                 ) : (
-                    <p className="text-xs font-semibold text-gray-400">{subtitle || '—'}</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{subtitle || '—'}</p>
                 )}
             </div>
         </div>

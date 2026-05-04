@@ -29,8 +29,9 @@ public class Wallet {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
+    @NotNull(message = "Type is required")
     @Enumerated(EnumType.STRING)
-    @Column(name = "type")
+    @Column(name = "type", nullable = false)
     private AccountType type;
 
     @Column(name = "currency_code", length = 3)

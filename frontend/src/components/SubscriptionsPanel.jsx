@@ -30,7 +30,10 @@ function toMonthly(amount, frequency) {
 
 function daysUntil(dateStr) {
     if (!dateStr) return null;
-    const diff = new Date(dateStr) - new Date();
+    const target = new Date(dateStr + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diff = target - today;
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
@@ -267,7 +270,16 @@ export default function SubscriptionsPanel() {
                                     {/* Amount */}
                                     <div className="mt-4 mb-5">
                                         <p className="text-3xl font-black text-gray-900 tabular-nums">
-                                            {sub.currencyCode === 'USD' ? '$' : sub.currencyCode === 'EUR' ? '€' : sub.currencyCode === 'VND' ? '₫' : ''}{parseFloat(sub.estimatedAmount || 0).toLocaleString()}
+                                            {
+                                                {
+                                                    'USD': '$',
+                                                    'EUR': '€',
+                                                    'VND': '₫',
+                                                    'GBP': '£',
+                                                    'JPY': '¥',
+                                                    'SGD': 'S$'
+                                                }[sub.currencyCode] || ''
+                                            }{parseFloat(sub.estimatedAmount || 0).toLocaleString()}
                                         </p>
                                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">per {sub.frequency}</p>
                                     </div>

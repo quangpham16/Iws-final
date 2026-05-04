@@ -17,9 +17,17 @@ export default function ReportsPage() {
     useEffect(() => {
         fetchReports();
     }, []);
-
     const fetchReports = async () => {
         try {
+            // Fetch categories & wallets for labeling
+            const cRes = await categoryApi.getAll();
+            const cats = cRes.data || [];
+            setCategories(cats);
+            const catMap = cats.reduce((m, c) => { m[c.id] = c; return m; }, {});
+
+            const wRes = await walletApi.getAll();
+            setWallets(wRes.data || []);
+
             // Fetch transactions for monthly breakdown
             const txRes = await transactionApi.getAll();
             const txs = txRes.data || [];
@@ -28,9 +36,20 @@ export default function ReportsPage() {
             const grouped = txs.reduce((acc, curr) => {
                 const month = (curr.date || '').substring(0, 7); // YYYY-MM
                 if (!acc[month]) acc[month] = { month, income: 0, expense: 0 };
-                const amt = parseFloat(curr.amount) || 0;
-                if (amt >= 0) acc[month].income += amt;
-                else acc[month].expense += Math.abs(amt);
+                
+                const amt = Math.abs(parseFloat(curr.amount) || 0);
+                const cat = curr.categoryId != null ? catMap[curr.categoryId] : null;
+                
+                if (cat?.type === 'income') {
+                    acc[month].income += amt;
+                } else if (cat?.type === 'expense') {
+                    acc[month].expense += amt;
+                } else {
+                    // Fallback to sign if category type unknown
+                    const raw = parseFloat(curr.amount) || 0;
+                    if (raw >= 0) acc[month].income += raw;
+                    else acc[month].expense += Math.abs(raw);
+                }
                 return acc;
             }, {});
             setMonthlyData(Object.values(grouped).sort((a, b) => b.month.localeCompare(a.month)));
@@ -42,12 +61,6 @@ export default function ReportsPage() {
             // Fetch goals
             const gRes = await goalApi.getAll();
             setGoals(gRes.data || []);
-
-            // Fetch categories & wallets for labeling
-            const cRes = await categoryApi.getAll();
-            setCategories(cRes.data || []);
-            const wRes = await walletApi.getAll();
-            setWallets(wRes.data || []);
 
             setCurrencySymbol('$');
         } catch (err) {
@@ -81,11 +94,21 @@ export default function ReportsPage() {
     const categoryMap = categories.reduce((m, c) => { m[c.id] = c; return m; }, {});
     const categoryTotals = Object.values((transactions || []).reduce((acc, t) => {
         const id = t.categoryId ?? 'uncategorized';
-        const amt = parseFloat(t.amount) || 0;
+        const amt = Math.abs(parseFloat(t.amount) || 0);
+        const cat = t.categoryId != null ? categoryMap[t.categoryId] : null;
+
         if (!acc[id]) acc[id] = { categoryId: id, income: 0, expense: 0, net: 0 };
-        if (amt >= 0) acc[id].income += amt;
-        else acc[id].expense += Math.abs(amt);
-        acc[id].net += amt;
+        
+        if (cat?.type === 'income') {
+            acc[id].income += amt;
+        } else if (cat?.type === 'expense') {
+            acc[id].expense += amt;
+        } else {
+            const raw = parseFloat(t.amount) || 0;
+            if (raw >= 0) acc[id].income += raw;
+            else acc[id].expense += Math.abs(raw);
+        }
+        acc[id].net += parseFloat(t.amount) || 0;
         return acc;
     }, {})).map(o => ({ ...o, name: categoryMap[o.categoryId]?.name || 'Uncategorized' }))
         .sort((a, b) => b.expense - a.expense);
@@ -94,11 +117,21 @@ export default function ReportsPage() {
     const walletMap = wallets.reduce((m, w) => { m[w.id] = w; return m; }, {});
     const walletTotals = Object.values((transactions || []).reduce((acc, t) => {
         const id = t.walletId ?? 'unknown';
-        const amt = parseFloat(t.amount) || 0;
+        const amt = Math.abs(parseFloat(t.amount) || 0);
+        const cat = t.categoryId != null ? categoryMap[t.categoryId] : null;
+
         if (!acc[id]) acc[id] = { walletId: id, income: 0, expense: 0, net: 0 };
-        if (amt >= 0) acc[id].income += amt;
-        else acc[id].expense += Math.abs(amt);
-        acc[id].net += amt;
+        
+        if (cat?.type === 'income') {
+            acc[id].income += amt;
+        } else if (cat?.type === 'expense') {
+            acc[id].expense += amt;
+        } else {
+            const raw = parseFloat(t.amount) || 0;
+            if (raw >= 0) acc[id].income += raw;
+            else acc[id].expense += Math.abs(raw);
+        }
+        acc[id].net += parseFloat(t.amount) || 0;
         return acc;
     }, {})).map(o => ({ ...o, name: walletMap[o.walletId]?.name || `Wallet ${o.walletId}`, balance: walletMap[o.walletId]?.currentBalance }))
         .sort((a, b) => (b.net || 0) - (a.net || 0));
@@ -147,9 +180,9 @@ export default function ReportsPage() {
 
         // Summary data as table
         const summaryData = [
-            ['Total Income', `${currencySymbol}${totalIncome.toLocaleString(undefined, {maximumFractionDigits: 0})}`],
-            ['Total Expenses', `${currencySymbol}${totalExpenses.toLocaleString(undefined, {maximumFractionDigits: 0})}`],
-            ['Total Savings', `${currencySymbol}${totalSavings.toLocaleString(undefined, {maximumFractionDigits: 0})}`],
+            ['Total Income', `${currencySymbol}${totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}`],
+            ['Total Expenses', `${currencySymbol}${totalExpenses.toLocaleString(undefined, { maximumFractionDigits: 0 })}`],
+            ['Total Savings', `${currencySymbol}${totalSavings.toLocaleString(undefined, { maximumFractionDigits: 0 })}`],
             ['Savings Rate', `${savingsRate}%`],
             ['Goals Progress', `${goalsProgress}%`],
             ['Active Goals', `${goals.length}`],
@@ -182,9 +215,9 @@ export default function ReportsPage() {
 
             const monthlyTableData = monthlyData.map(m => [
                 new Date(m.month).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-                `${currencySymbol}${m.income.toLocaleString(undefined, {maximumFractionDigits: 0})}`,
-                `${currencySymbol}${m.expense.toLocaleString(undefined, {maximumFractionDigits: 0})}`,
-                `${currencySymbol}${(m.income - m.expense).toLocaleString(undefined, {maximumFractionDigits: 0})}`,
+                `${currencySymbol}${m.income.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+                `${currencySymbol}${m.expense.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+                `${currencySymbol}${(m.income - m.expense).toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
                 `${m.income > 0 ? Math.round(((m.income - m.expense) / m.income) * 100) : 0}%`
             ]);
 
@@ -212,12 +245,6 @@ export default function ReportsPage() {
                     <h1 className="text-4xl font-black text-gray-900 tracking-tight">Financial Reports</h1>
                     <p className="text-gray-500 font-medium">Analyze your financial health & performance</p>
                 </div>
-                <div className="flex items-center gap-3">
-                </div>
-                <button onClick={exportPDF} className="flex items-center gap-2 bg-[#106E4E] text-white px-6 py-3 rounded-2xl font-bold hover:bg-[#0d5a3f] transition-all shadow-xl shadow-[#106E4E]/20 active:scale-95 hover:-translate-y-0.5">
-                    <Download size={18} />
-                    Export PDF
-                </button>
             </div>
 
             {loading ? (
@@ -234,7 +261,7 @@ export default function ReportsPage() {
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Income</p>
                                 <ArrowUpRight size={20} className="text-[#106E4E]" />
                             </div>
-                            <p className="text-2xl font-black text-gray-900 tabular-nums">{currencySymbol}{totalIncome.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                            <p className="text-2xl font-black text-gray-900 tabular-nums">{currencySymbol}{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                             <p className="text-xs text-gray-400 mt-2">{monthlyData.length} months</p>
                         </div>
 
@@ -244,7 +271,7 @@ export default function ReportsPage() {
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Expenses</p>
                                 <ArrowDownRight size={16} className="text-red-500" />
                             </div>
-                            <p className="text-2xl font-black text-gray-900 tabular-nums">{currencySymbol}{totalExpenses.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                            <p className="text-2xl font-black text-gray-900 tabular-nums">{currencySymbol}{totalExpenses.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                             <p className="text-xs text-gray-400 mt-2">{monthlyData.length} months</p>
                         </div>
 
@@ -254,7 +281,7 @@ export default function ReportsPage() {
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Savings</p>
                                 <TrendingUp size={16} className="text-blue-500" />
                             </div>
-                            <p className="text-2xl font-black text-gray-900 tabular-nums">{currencySymbol}{totalSavings.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                            <p className="text-2xl font-black text-gray-900 tabular-nums">{currencySymbol}{totalSavings.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                             <p className="text-xs text-emerald-600 mt-2 font-bold">{savingsRate}% savings rate</p>
                         </div>
 
@@ -290,20 +317,20 @@ export default function ReportsPage() {
                                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Income</p>
                                             <div className="flex items-center gap-1 text-emerald-600 font-black">
                                                 <ArrowUpRight size={14} />
-                                                <span>{currencySymbol}{data.income.toLocaleString(undefined, {maximumFractionDigits: 0})}</span>
+                                                <span>{currencySymbol}{data.income.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                             </div>
                                         </div>
                                         <div>
                                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Expenses</p>
                                             <div className="flex items-center gap-1 text-red-500 font-black">
                                                 <ArrowDownRight size={14} />
-                                                <span>{currencySymbol}{data.expense.toLocaleString(undefined, {maximumFractionDigits: 0})}</span>
+                                                <span>{currencySymbol}{data.expense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                             </div>
                                         </div>
                                         <div>
                                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Savings</p>
                                             <div className="font-black text-gray-900">
-                                                {currencySymbol}{(data.income - data.expense).toLocaleString(undefined, {maximumFractionDigits: 0})}
+                                                {currencySymbol}{(data.income - data.expense).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                             </div>
                                         </div>
                                         <div>
@@ -327,11 +354,11 @@ export default function ReportsPage() {
                                     <li key={c.categoryId} className="flex items-center justify-between">
                                         <div>
                                             <p className="font-bold text-gray-900">{c.name}</p>
-                                            <p className="text-xs text-gray-400">Income {currencySymbol}{Math.round(c.income).toLocaleString(undefined, {maximumFractionDigits:0})}</p>
+                                            <p className="text-xs text-gray-400">Income {currencySymbol}{Math.round(c.income).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-black text-red-600">{currencySymbol}{Math.round(c.expense).toLocaleString(undefined, {maximumFractionDigits:0})}</p>
-                                            <p className="text-xs text-gray-400">Net {currencySymbol}{Math.round(c.net).toLocaleString(undefined, {maximumFractionDigits:0})}</p>
+                                            <p className="font-black text-red-600">{currencySymbol}{Math.round(c.expense).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                            <p className="text-xs text-gray-400">Net {currencySymbol}{Math.round(c.net).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                         </div>
                                     </li>
                                 ))}
@@ -346,11 +373,11 @@ export default function ReportsPage() {
                                     <li key={w.walletId} className="flex items-center justify-between">
                                         <div>
                                             <p className="font-bold text-gray-900">{w.name}</p>
-                                            <p className="text-xs text-gray-400">Balance {currencySymbol}{w.balance ? Math.round(w.balance).toLocaleString(undefined, {maximumFractionDigits:0}) : '—'}</p>
+                                            <p className="text-xs text-gray-400">Balance {currencySymbol}{w.balance ? Math.round(w.balance).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '—'}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-black text-gray-900">{currencySymbol}{Math.round(w.net).toLocaleString(undefined, {maximumFractionDigits:0})}</p>
-                                            <p className="text-xs text-gray-400">In {currencySymbol}{Math.round(w.income).toLocaleString(undefined, {maximumFractionDigits:0})}</p>
+                                            <p className="font-black text-gray-900">{currencySymbol}{Math.round(w.net).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                                            <p className="text-xs text-gray-400">In {currencySymbol}{Math.round(w.income).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                         </div>
                                     </li>
                                 ))}
@@ -365,7 +392,7 @@ export default function ReportsPage() {
                                     <li key={g.id} className="flex items-center justify-between">
                                         <div>
                                             <p className="font-bold text-gray-900">{g.name}</p>
-                                            <p className="text-xs text-gray-400">Saved {currencySymbol}{Math.round(g.saved).toLocaleString(undefined, {maximumFractionDigits:0})} of {currencySymbol}{Math.round(g.target).toLocaleString(undefined, {maximumFractionDigits:0})}</p>
+                                            <p className="text-xs text-gray-400">Saved {currencySymbol}{Math.round(g.saved).toLocaleString(undefined, { maximumFractionDigits: 0 })} of {currencySymbol}{Math.round(g.target).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                         </div>
                                         <div className="text-right">
                                             <p className="font-black text-green-600">{g.progress}%</p>
@@ -384,7 +411,7 @@ export default function ReportsPage() {
                                     <li key={b.id} className="flex items-center justify-between">
                                         <div>
                                             <p className="font-bold text-gray-900">{b.name}</p>
-                                            <p className="text-xs text-gray-400">Spent {currencySymbol}{Math.round(b.spent).toLocaleString(undefined, {maximumFractionDigits:0})} / {currencySymbol}{Math.round(b.amount).toLocaleString(undefined, {maximumFractionDigits:0})}</p>
+                                            <p className="text-xs text-gray-400">Spent {currencySymbol}{Math.round(b.spent).toLocaleString(undefined, { maximumFractionDigits: 0 })} / {currencySymbol}{Math.round(b.amount).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                                         </div>
                                         <div className="text-right">
                                             <p className="font-black text-blue-600">{b.utilization}%</p>
